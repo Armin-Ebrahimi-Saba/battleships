@@ -60,11 +60,8 @@ void append (int x, int y, struct SHIP* ship){
 
 }
 
-// this function checks if the ship fits in its place in 2 condition:
-//                                                                  first if the ship is completely in the map.
-//                                                                  second if the ship does not have any collision with other ships.
-
-int isFit(const char *map, struct SHIP* ship){
+// check if the ship fits in the map
+int isInside (const char *map, struct SHIP* ship){
 
     int _y_ = ship->head->y;
     int _x_ = ship->head->x ;
@@ -72,24 +69,20 @@ int isFit(const char *map, struct SHIP* ship){
     if (strcmp(ship->dir, "d") == 0){
         for (int i = -1;i < ship->length;i++){
 
-            for (int j = -1;j < 2;j++){
-
-                if (map[(_y_ + i) * WIDTH + _x_ + j] == 'f' || !((_y_ + i <= HEIGHT && _y_ + i >= -1) && (-1 <= _x_ + j && _x_ + j <= WIDTH))){
-                    return 0;}
-            }
+            if (!((_y_ + i <= HEIGHT && _y_ + i >= -1) && (-1 <= _x_  && _x_ <= WIDTH))){
+                printf("the ship does not fit into the map\n");
+                return false;}
         }
     }
 
 
     if (strcmp(ship->dir, "u") == 0){
 
-        for (int i = -1;i < ship->length;i++){
+        for (int i = -1;i < ship->length ;i++){
 
-            for (int j = -1;j < 2;j++){
-
-                if (map[(_y_ - i) * WIDTH + _x_ + j] == 'f' || !((_y_ - i <= HEIGHT && _y_ - i >= -1) && (-1 <= _x_ + j && _x_ + j <= WIDTH))){
-                    return 0;}
-            }
+            if (!((_y_ - i < HEIGHT && _y_ - i >= -1) && (-1 <= _x_ && _x_ <= WIDTH))){
+                printf("the ship does not fit into the map\n");
+                return false;}
         }
     }
 
@@ -98,11 +91,9 @@ int isFit(const char *map, struct SHIP* ship){
 
         for (int i = -1;i < ship->length;i++){
 
-            for (int j = -1;j < 2;j++){
-
-                if (map[(_y_ + j) * WIDTH + _x_ + i] == 'f' || !((_y_ + j <= HEIGHT && _y_ + j >= -1) && (-1 <= _x_ + i && _x_ + i <= WIDTH))){
-                    return 0;}
-            }
+            if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ + i && _x_ + i <= WIDTH))){
+                printf("the ship does not fit into the map\n");
+                return false;}
         }
     }
 
@@ -111,15 +102,92 @@ int isFit(const char *map, struct SHIP* ship){
 
         for (int i = -1;i < ship->length;i++){
 
+            if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ - i && _x_ - i <= WIDTH))){
+                printf("the ship does not fit into the map\n");
+                return false;}
+        }
+    }
+
+
+    return true;
+}
+
+// check if is there any collision between ships space
+int ifCollision (const char *map, struct SHIP* ship){
+
+    int _y_ = ship->head->y;
+    int _x_ = ship->head->x ;
+
+    if (strcmp(ship->dir, "d") == 0){
+        for (int i = -1;i <= ship->length;i++){
+
             for (int j = -1;j < 2;j++){
 
-                if (map[(_y_ + j) * WIDTH + _x_ - i] == 'f' || !((_y_ + j <= HEIGHT && _y_ + j >= -1) && (-1 <= _x_ - i && _x_ - i <= WIDTH))){
-                    return 0;}
-
+                if (map[(_y_ + i) * WIDTH + _x_ + j] == 'f' && ((_y_ + i < HEIGHT && _y_ + i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
+                    printf("there is a collision between ships\n");
+                    return true;}
             }
         }
     }
-    return 1;
+
+
+    if (strcmp(ship->dir, "u") == 0){
+
+        for (int i = -1;i <= ship->length ;i++){
+
+            for (int j = -1;j < 2;j++){
+
+                if (map[(_y_ - i) * WIDTH + _x_ + j] == 'f' && ((_y_ - i < HEIGHT && _y_ - i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
+                    printf("there is a collision between ships\n");
+                    return true;}
+            }
+        }
+    }
+
+
+    if (strcmp(ship->dir, "r") == 0){
+
+        for (int i = -1;i <= ship->length;i++){
+
+            for (int j = -1;j < 2;j++){
+
+                if (map[(_y_ + j) * WIDTH + _x_ + i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ + i < WIDTH && _x_ + i > 0 ))){
+                    printf("there is a collision between ships\n");
+                    return true;}
+            }
+        }
+    }
+
+
+    if (strcmp(ship->dir, "l") == 0){
+
+        for (int i = -1;i <= ship->length;i++){
+
+            for (int j = -1;j < 2;j++){
+
+                if (map[(_y_ + j) * WIDTH + _x_ - i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ - i < WIDTH && _x_ - i > 0 ))){
+                    printf("there is a collision between ships\n");
+                    return true;}
+            }
+        }
+    }
+    return false;
+
+}
+
+
+// this function checks if the ship fits in its place in 2 condition:
+//                                                                  first if the ship is completely in the map.
+//                                                                  second if the ship does not have any collision with other ships.
+int isFit(const char *map, struct SHIP* ship){
+
+    if (isInside(map, ship) && !(ifCollision(map, ship))){
+
+        return true;
+    }else{
+
+        return false;
+    }
 }
 
 // this function put the ship in its place
@@ -135,7 +203,6 @@ int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
     if (strcmp(dir, "u") == 0){
 
         if (isFit(map, ship) == 0){      // this check that if the ship fits in the place or not
-            printf("invalid place for putting your ship\n");
             return 0;}
 
         map[_x_ + WIDTH * _y_] = 'f';
@@ -150,7 +217,6 @@ int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
     if (strcmp(dir, "d") == 0){
 
         if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
-            printf("invalid place for putting your ship\n");
             return 0;}
 
         map[_x_ + WIDTH * _y_] = 'f';
@@ -165,7 +231,6 @@ int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
     if (strcmp(dir, "r") == 0){
 
         if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
-            printf("invalid place for putting your ship\n");
             return 0;}
 
         map[_x_ + WIDTH * _y_] = 'f';
@@ -193,82 +258,7 @@ int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
     return 1;
 }
 
-
-int make_ship_auto(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
-
-    struct node* current_node;
-    current_node = ship->head->next;
-
-    ship->head->x = _x_;
-    ship->head->y = _y_;
-    ship->dir = dir;
-
-    for (int i = 0;i < ship->length;i++){
-        // u : up
-        if (strcmp(dir, "u") == 0){
-
-            if (isFit(map, ship) == 0){      // this check that if the fits in the place or not
-                return 0;}
-
-            map[_x_ + WIDTH * _y_] = 'f';
-
-            current_node->x = ship->head->x;
-            current_node->y = current_node->prev->y - 1;
-            map[current_node->x + current_node->y * WIDTH] = 'f';
-
-            current_node = current_node->next;
-
-        }
-        // d : down
-        if (strcmp(dir, "d") == 0){
-
-            if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
-                return 0;}
-
-            map[_x_ + WIDTH * _y_] = 'f';
-
-            current_node->x = ship->head->x;
-            current_node->y = current_node->prev->y + 1;
-            map[current_node->x + current_node->y * WIDTH] = 'f';
-
-            current_node = current_node->next;
-
-        }
-        // r : right
-        if (strcmp(dir, "r") == 0){
-
-            if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
-                return 0;}
-
-            map[_x_ + WIDTH * _y_] = 'f';
-
-            current_node->y = ship->head->y;
-            current_node->x = current_node->prev->x + 1;
-            map[current_node->x + current_node->y * WIDTH] = 'f';
-
-            current_node = current_node->next;
-
-        }
-        // l : left
-        if (strcmp(dir, "l") == 0){
-
-            if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
-                return 0;}
-
-            map[_x_ + WIDTH * _y_] = 'f';
-
-            current_node->y = ship->head->y;
-            current_node->x = current_node->prev->x - 1;
-            map[current_node->x + current_node->y * WIDTH] = 'f';
-
-            current_node = current_node->next;
-
-        }
-    }
-    return 1;
-}
-
-
+// this function locate the ships into the map manually
 void map_ships_manually(struct SHIP* ships[], char* map){
     // the code below is for players mapping term
 
@@ -325,6 +315,81 @@ void map_ships_manually(struct SHIP* ships[], char* map){
 
             length_1_counter++;
 
+        }else if (length == 1 && length_1_counter == 4) {printf("you have used all of your ships with length of 1\n");continue;}
+
+        //----------------------length 2
+
+        if (length == 2 && length_2_counter < 3){
+
+            ships[3 + length_2_counter]->dir = dir;
+            if (make_ship(ships[3 + length_2_counter], dir, map, _x_, _y_) == 0 ) continue;
+
+            length_2_counter++;
+
+        }else if (length == 2 && length_2_counter == 3) {printf("you have used all of your ships with length of 2\n");continue;}
+
+        //----------------------length 3
+
+        if (length == 3 && length_3_counter < 2){
+
+            ships[1 + length_3_counter]->dir = dir;
+            if (make_ship(ships[1 + length_3_counter], dir, map, _x_, _y_) == 0) continue;
+
+            length_3_counter++;
+
+        }else if (length == 3 && length_3_counter == 2) {printf("you have used all of your ships with length of 3\n");continue;}
+
+        //----------------------length 5
+
+        if (length == 5 && length_5_counter < 1){
+
+            ships[0]->dir = dir;
+            if (make_ship(ships[0], dir, map, _x_, _y_) == 0) continue;
+
+            length_5_counter++;
+
+        }else if (length == 5 && length_5_counter == 1) {printf("you have used all of your ships with length of 5\n");continue;}
+
+        //--------------------------------------------------------------------------------------------------------
+
+    }
+}
+
+// this function locate the ships into the map automatically
+void map_ships_automatically(struct SHIP* ships[], char* map){
+        // the code below is for mapping automatically
+
+        srand(time(0));
+
+        int length_1_counter = 0;
+        int length_2_counter = 0;
+        int length_3_counter = 0;
+        int length_5_counter = 0;
+
+    while (length_1_counter + length_2_counter + length_3_counter + length_5_counter < total_number_ships){
+
+        int length = rand() % 4;              // length is for the length of the boat that the player select
+        int _x_ = rand() % 10;                  // x of head of the ship
+        int _y_ = rand() % 10;                  // y of head of the ship
+        char *dir = malloc (sizeof(char) * 2);
+        int dir_int = rand() % 4 + 1;           // the direction that the ship has, must choose between 1(up), 2(down), 3(right), 4(left)
+
+        if (dir_int == 1) dir = "u";
+        else if (dir_int == 2) dir = "d";
+        else if (dir_int == 3) dir = "r";
+        else if (dir_int == 4) dir = "l";
+
+        //----------------------------------------------------- this part is placing ships in the map
+
+        //----------------------length 1
+
+        if (length == 1 && length_1_counter < 4){
+
+            ships[6 + length_1_counter]->dir = dir;
+            if (make_ship(ships[6 + length_1_counter], dir, map, _x_, _y_) == 0) continue;
+
+            length_1_counter++;
+
         }else if (length == 1 && length_1_counter == 4) {printf("you have used all of your ships with length of 1");continue;}
 
         //----------------------length 2
@@ -342,8 +407,8 @@ void map_ships_manually(struct SHIP* ships[], char* map){
 
         if (length == 3 && length_3_counter < 2){
 
-            ships[3 + length_3_counter]->dir = dir;
-            if (make_ship(ships[3 + length_3_counter], dir, map, _x_, _y_) == 0) continue;
+            ships[1 + length_3_counter]->dir = dir;
+            if (make_ship(ships[1 + length_3_counter], dir, map, _x_, _y_) == 0) continue;
 
             length_3_counter++;
 
@@ -366,102 +431,21 @@ void map_ships_manually(struct SHIP* ships[], char* map){
 }
 
 
-void map_ships_automatically(struct SHIP* ships[], char* map){
-        // the code below is for mapping automatically
+void draw_board(char *map){
 
-        srand(time(0));
+    for (int y = 0 ; y < HEIGHT ; y ++){
 
-        int length_1_counter = 0;
-        int length_2_counter = 0;
-        int length_3_counter = 0;
-        int length_5_counter = 0;
+        for (int x = 0 ; x < WIDTH ; x++) {
 
-        int length = rand() % 4;              // length is for the length of the boat that the player select
-        int _x_ = rand() % 10;                  // x of head of the ship
-        int _y_ = rand() % 10;                  // y of head of the ship
-        char *dir = malloc (sizeof(char) * 2);
-        int dir_int = rand() % 4 + 1;           // the direction that the ship has, must choose between 1(up), 2(down), 3(right), 4(left)
+            if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
+            else printf(" %c |", map[x + WIDTH * y]);
+        }
 
-        if (dir_int == 1) dir = "u";
-        else if (dir_int == 2) dir = "d";
-        else if (dir_int == 3) dir = "r";
-        else if (dir_int == 4) dir = "l";
+        if (y < HEIGHT - 1){for (int x = 0 ; x < WIDTH; x++) {
 
-        // using the built function for putting the ships in their places.
-        while (length_1_counter + length_2_counter + length_3_counter + length_5_counter < total_number_ships){
-
-            //----------------------length 1
-
-            if (length == 1 && length_1_counter < 4){
-
-                ships[6 + length_1_counter]->head->x = _x_;
-                ships[6 + length_1_counter]->head->y = _y_;
-
-                length_1_counter++;
+                if (x == WIDTH - 1) printf("---\n");
+                else printf("---|");
             }
-
-            //----------------------length 2
-
-            if (length == 2 && length_2_counter < 3){
-
-                ships[3 + length_2_counter]->head->x = _x_;
-                ships[3 + length_2_counter]->head->y = _y_;
-                if (make_ship_auto(ships[3 + length_2_counter], dir, map, _x_, _y_) == 0) continue;
-
-                length_2_counter++;
-            }
-
-            //----------------------length 3
-
-            if (length == 3 && length_3_counter < 2){
-
-                ships[1 + length_3_counter]->head->x = _x_;
-                ships[1 + length_3_counter]->head->y = _y_;
-                if (make_ship_auto(ships[3 + length_3_counter],dir , map, _x_, _y_) == 0) continue;
-
-                length_3_counter++;
-            }
-
-            //----------------------length 5
-
-            if (length == 5 && length_5_counter < 1){
-
-                ships[0]->head->x = _x_;
-                ships[0]->head->y = _y_;
-                if (make_ship_auto(ships[0], dir, map, _x_, _y_) == 0) continue;
-
-                length_5_counter++;
-            }
-            //----------------------finished getting the ships coordinates
-    }
-}
-
-
-void draw_board(){
-
-    int x = 0, y = 0;
-    while (y < 2 * HEIGHT - 1){
-
-        if (y % 2 != 0){
-
-            if (x < WIDTH - 1) {
-                printf("---|");
-                x++;
-            }else {
-                printf("---\n");
-                x = 0;
-                y++;
-                continue;}
-
-        }else{
-            if (x < WIDTH - 1) {
-                printf("   |");
-                x++;
-            }else{
-                printf("   \n");
-                y++;
-                x = 0;}
-
         }
     }
 }
@@ -529,7 +513,7 @@ void Main (){
     ships[9]->length = 1;
 
     map_ships_manually(ships, map);
-    draw_board();
+    draw_board(map);
 }
 
 int main( )
@@ -556,3 +540,5 @@ int main( )
 //                         w | w | c | c | w
 //                        ---|---|---|---|---
 //                         w | w | c | c | w
+
+// a test case : 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d
