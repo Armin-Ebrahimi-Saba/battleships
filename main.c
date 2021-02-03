@@ -15,6 +15,7 @@ struct node {
 
     int x;
     int y;
+    char status;
 
     struct node* next;
     struct node* prev;
@@ -31,7 +32,8 @@ struct SHIP {
 };
 
 
-void append (int x, int y, struct SHIP* ship){
+// this function is for linking the ships parts in the map_player
+void append (int x, int y, struct SHIP* ship, char status){
 
     struct node* new_node = malloc(sizeof(struct node));
     if (ship->head == NULL && ship->tail == NULL){
@@ -41,9 +43,11 @@ void append (int x, int y, struct SHIP* ship){
 
         ship->tail->x = x;
         ship->tail->y = y;
+        ship->tail->status = status;
 
         ship->head->x = x;
         ship->head->y = y;
+        ship->head->status = status;
 
     }else{
 
@@ -54,14 +58,68 @@ void append (int x, int y, struct SHIP* ship){
 
         ship->tail->y = y;
         ship->tail->x = x;
+        ship->tail->status = status;
 
     }
 
 
 }
 
-// check if the ship fits in the map
-int isInside (const char *map, struct SHIP* ship){
+
+// this function find the ship according to a coordinate
+struct SHIP* getShip (int x, int y, struct SHIP* ships[]){
+
+    struct node* current_node;
+
+    for (int i = 0 ; i < total_number_ships ; i ++){
+
+        current_node = ships[i]->head;
+        for (int j = 0 ; j < ships[i]->length ; j++){
+
+            if (x == current_node->x && y == current_node->y){return ships[i];}
+
+            current_node = current_node->next;
+        }
+    }
+}
+
+
+// this function find the exact node according to a coordinate
+struct node* getNode (int x, int y, struct SHIP* ships[]){
+
+    struct node* current_node;
+
+    for (int i = 0 ; i < total_number_ships ; i ++){
+
+        current_node = ships[i]->head;
+        for (int j = 0 ; j < ships[i]->length ; j++){
+
+            if (x == current_node->x && y == current_node->y){return current_node;}
+
+            current_node = current_node->next;
+        }
+    }
+}
+
+
+// this function check if the function in completely exploded or not
+int isExploded (struct SHIP* ship){
+
+    struct node* current_node;
+    current_node = ship->head;
+
+    for (int i = 0 ; i <ship->length ; i++){
+
+        if (current_node->status == 'f') {return false;}
+        current_node = current_node->next;
+    }
+
+    return true;
+}
+
+
+// check if the ship fits in the map_player
+int isInside (const char *map_player, struct SHIP* ship){
 
     int _y_ = ship->head->y;
     int _x_ = ship->head->x ;
@@ -70,7 +128,7 @@ int isInside (const char *map, struct SHIP* ship){
         for (int i = -1;i < ship->length;i++){
 
             if (!((_y_ + i <= HEIGHT && _y_ + i >= -1) && (-1 <= _x_  && _x_ <= WIDTH))){
-                printf("the ship does not fit into the map\n");
+                printf("the ship does not fit into the map_player\n");
                 return false;}
         }
     }
@@ -81,7 +139,7 @@ int isInside (const char *map, struct SHIP* ship){
         for (int i = -1;i < ship->length ;i++){
 
             if (!((_y_ - i < HEIGHT && _y_ - i >= -1) && (-1 <= _x_ && _x_ <= WIDTH))){
-                printf("the ship does not fit into the map\n");
+                printf("the ship does not fit into the map_player\n");
                 return false;}
         }
     }
@@ -92,7 +150,7 @@ int isInside (const char *map, struct SHIP* ship){
         for (int i = -1;i < ship->length;i++){
 
             if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ + i && _x_ + i <= WIDTH))){
-                printf("the ship does not fit into the map\n");
+                printf("the ship does not fit into the map_player\n");
                 return false;}
         }
     }
@@ -103,7 +161,7 @@ int isInside (const char *map, struct SHIP* ship){
         for (int i = -1;i < ship->length;i++){
 
             if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ - i && _x_ - i <= WIDTH))){
-                printf("the ship does not fit into the map\n");
+                printf("the ship does not fit into the map_player\n");
                 return false;}
         }
     }
@@ -112,8 +170,9 @@ int isInside (const char *map, struct SHIP* ship){
     return true;
 }
 
+
 // check if is there any collision between ships space
-int ifCollision (const char *map, struct SHIP* ship){
+int ifCollision (const char *map_player, struct SHIP* ship){
 
     int _y_ = ship->head->y;
     int _x_ = ship->head->x ;
@@ -123,7 +182,7 @@ int ifCollision (const char *map, struct SHIP* ship){
 
             for (int j = -1;j < 2;j++){
 
-                if (map[(_y_ + i) * WIDTH + _x_ + j] == 'f' && ((_y_ + i < HEIGHT && _y_ + i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
+                if (map_player[(_y_ + i) * WIDTH + _x_ + j] == 'f' && ((_y_ + i < HEIGHT && _y_ + i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
                     printf("there is a collision between ships\n");
                     return true;}
             }
@@ -137,7 +196,7 @@ int ifCollision (const char *map, struct SHIP* ship){
 
             for (int j = -1;j < 2;j++){
 
-                if (map[(_y_ - i) * WIDTH + _x_ + j] == 'f' && ((_y_ - i < HEIGHT && _y_ - i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
+                if (map_player[(_y_ - i) * WIDTH + _x_ + j] == 'f' && ((_y_ - i < HEIGHT && _y_ - i > 0) && (_x_ + j < WIDTH && _x_ + j > 0 ))){
                     printf("there is a collision between ships\n");
                     return true;}
             }
@@ -151,7 +210,7 @@ int ifCollision (const char *map, struct SHIP* ship){
 
             for (int j = -1;j < 2;j++){
 
-                if (map[(_y_ + j) * WIDTH + _x_ + i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ + i < WIDTH && _x_ + i > 0 ))){
+                if (map_player[(_y_ + j) * WIDTH + _x_ + i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ + i < WIDTH && _x_ + i > 0 ))){
                     printf("there is a collision between ships\n");
                     return true;}
             }
@@ -165,7 +224,7 @@ int ifCollision (const char *map, struct SHIP* ship){
 
             for (int j = -1;j < 2;j++){
 
-                if (map[(_y_ + j) * WIDTH + _x_ - i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ - i < WIDTH && _x_ - i > 0 ))){
+                if (map_player[(_y_ + j) * WIDTH + _x_ - i] == 'f' && ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ - i < WIDTH && _x_ - i > 0 ))){
                     printf("there is a collision between ships\n");
                     return true;}
             }
@@ -177,11 +236,11 @@ int ifCollision (const char *map, struct SHIP* ship){
 
 
 // this function checks if the ship fits in its place in 2 condition:
-//                                                                  first if the ship is completely in the map.
-//                                                                  second if the ship does not have any collision with other ships.
-int isFit(const char *map, struct SHIP* ship){
+//                                                                   first if the ship is completely in the map_player.
+//                                                                   second if the ship does not have any collision with other ships.
+int isFit(const char *map_player, struct SHIP* ship){
 
-    if (isInside(map, ship) && !(ifCollision(map, ship))){
+    if (isInside(map_player, ship) && !(ifCollision(map_player, ship))){
 
         return true;
     }else{
@@ -190,10 +249,11 @@ int isFit(const char *map, struct SHIP* ship){
     }
 }
 
-// this function put the ship in its place
-int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
 
-    append(_x_, _y_, ship);
+// this function put the ship in its place
+int make_ship(struct SHIP* ship, char *dir, char *map_player, int _x_, int _y_){
+
+    append(_x_, _y_, ship, 'f');
     ship->dir = dir;
 
     struct node* current_node;
@@ -202,64 +262,65 @@ int make_ship(struct SHIP* ship, char *dir, char *map, int _x_, int _y_){
     // u : up
     if (strcmp(dir, "u") == 0){
 
-        if (isFit(map, ship) == 0){      // this check that if the ship fits in the place or not
+        if (isFit(map_player, ship) == 0){      // this check that if the ship fits in the place or not
             return 0;}
 
-        map[_x_ + WIDTH * _y_] = 'f';
+        map_player[_x_ + WIDTH * _y_] = 'f';
         for (int i = 1;i < ship->length ; i++) {
 
-            append(_x_, _y_ - i, ship);
-            map[_x_ + WIDTH * (_y_ - i)];
+            append(_x_, _y_ - i, ship, 'f');
+            map_player[_x_ + WIDTH * (_y_ - i)];
         }
     }
 
     // d : down
     if (strcmp(dir, "d") == 0){
 
-        if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
+        if (isFit(map_player, ship) == 0){      // this check that if the ship fits in the map_player or not
             return 0;}
 
-        map[_x_ + WIDTH * _y_] = 'f';
+        map_player[_x_ + WIDTH * _y_] = 'f';
         for (int i = 1;i < ship->length ; i++) {
 
-            append(_x_, _y_ + i, ship);
-            map[_x_ + WIDTH * (_y_ + i)] = 'f';
+            append(_x_, _y_ + i, ship, 'f');
+            map_player[_x_ + WIDTH * (_y_ + i)] = 'f';
         }
     }
 
     // r : right
     if (strcmp(dir, "r") == 0){
 
-        if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
+        if (isFit(map_player, ship) == 0){      // this check that if the ship fits in the map_player or not
             return 0;}
 
-        map[_x_ + WIDTH * _y_] = 'f';
+        map_player[_x_ + WIDTH * _y_] = 'f';
         for (int i = 1 ; i < ship->length ; i++) {
 
-            append(_x_ + i, _y_, ship);
-            map[_x_ + i + WIDTH * _y_] = 'f';
+            append(_x_ + i, _y_, ship, 'f');
+            map_player[_x_ + i + WIDTH * _y_] = 'f';
         }
     }
 
     // l : left
     if (strcmp(dir, "l") == 0){
 
-        if (isFit(map, ship) == 0){      // this check that if the ship fits in the map or not
+        if (isFit(map_player, ship) == 0){      // this check that if the ship fits in the map_player or not
             printf("invalid place for putting your ship\n");
             return 0;}
 
-        map[_x_ + WIDTH * _y_] = 'f';
+        map_player[_x_ + WIDTH * _y_] = 'f';
         for (int i = 1 ; i < ship->length ; i++) {
 
-            append(_x_ - i, _y_, ship);
-            map[_x_ - i + WIDTH * _y_] = 'f';
+            append(_x_ - i, _y_, ship, 'f');
+            map_player[_x_ - i + WIDTH * _y_] = 'f';
         }
     }
     return 1;
 }
 
-// this function locate the ships into the map manually
-void map_ships_manually(struct SHIP* ships[], char* map){
+
+// this function locate the ships into the map_player manually
+void map_player_ships_manually(struct SHIP* ships[], char* map_player){
     // the code below is for players mapping term
 
     int length_1_counter = 0;
@@ -304,14 +365,14 @@ void map_ships_manually(struct SHIP* ships[], char* map){
             scanf("%s",dir);
         }while (strcmp(dir, "u") != 0 && strcmp(dir, "d") != 0 && strcmp(dir, "r") != 0 && strcmp(dir, "l") != 0);
 
-        //----------------------------------------------------- this part is placing ships in the map
+        //----------------------------------------------------- this part is placing ships in the map_player
 
         //----------------------length 1
 
         if (length == 1 && length_1_counter < 4){
 
             ships[6 + length_1_counter]->dir = dir;
-            if (make_ship(ships[6 + length_1_counter], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[6 + length_1_counter], dir, map_player, _x_, _y_) == 0) continue;
 
             length_1_counter++;
 
@@ -322,7 +383,7 @@ void map_ships_manually(struct SHIP* ships[], char* map){
         if (length == 2 && length_2_counter < 3){
 
             ships[3 + length_2_counter]->dir = dir;
-            if (make_ship(ships[3 + length_2_counter], dir, map, _x_, _y_) == 0 ) continue;
+            if (make_ship(ships[3 + length_2_counter], dir, map_player, _x_, _y_) == 0 ) continue;
 
             length_2_counter++;
 
@@ -333,7 +394,7 @@ void map_ships_manually(struct SHIP* ships[], char* map){
         if (length == 3 && length_3_counter < 2){
 
             ships[1 + length_3_counter]->dir = dir;
-            if (make_ship(ships[1 + length_3_counter], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[1 + length_3_counter], dir, map_player, _x_, _y_) == 0) continue;
 
             length_3_counter++;
 
@@ -344,7 +405,7 @@ void map_ships_manually(struct SHIP* ships[], char* map){
         if (length == 5 && length_5_counter < 1){
 
             ships[0]->dir = dir;
-            if (make_ship(ships[0], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[0], dir, map_player, _x_, _y_) == 0) continue;
 
             length_5_counter++;
 
@@ -355,8 +416,9 @@ void map_ships_manually(struct SHIP* ships[], char* map){
     }
 }
 
-// this function locate the ships into the map automatically
-void map_ships_automatically(struct SHIP* ships[], char* map){
+
+// this function locate the ships into the map_player automatically
+void map_player_ships_automatically(struct SHIP* ships[], char* map_player){
         // the code below is for mapping automatically
 
         srand(time(0));
@@ -379,14 +441,14 @@ void map_ships_automatically(struct SHIP* ships[], char* map){
         else if (dir_int == 3) dir = "r";
         else if (dir_int == 4) dir = "l";
 
-        //----------------------------------------------------- this part is placing ships in the map
+        //----------------------------------------------------- this part is placing ships in the map_player
 
         //----------------------length 1
 
         if (length == 1 && length_1_counter < 4){
 
             ships[6 + length_1_counter]->dir = dir;
-            if (make_ship(ships[6 + length_1_counter], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[6 + length_1_counter], dir, map_player, _x_, _y_) == 0) continue;
 
             length_1_counter++;
 
@@ -397,7 +459,7 @@ void map_ships_automatically(struct SHIP* ships[], char* map){
         if (length == 2 && length_2_counter < 3){
 
             ships[3 + length_2_counter]->dir = dir;
-            if (make_ship(ships[3 + length_2_counter], dir, map, _x_, _y_) == 0 ) continue;
+            if (make_ship(ships[3 + length_2_counter], dir, map_player, _x_, _y_) == 0 ) continue;
 
             length_2_counter++;
 
@@ -408,7 +470,7 @@ void map_ships_automatically(struct SHIP* ships[], char* map){
         if (length == 3 && length_3_counter < 2){
 
             ships[1 + length_3_counter]->dir = dir;
-            if (make_ship(ships[1 + length_3_counter], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[1 + length_3_counter], dir, map_player, _x_, _y_) == 0) continue;
 
             length_3_counter++;
 
@@ -419,7 +481,7 @@ void map_ships_automatically(struct SHIP* ships[], char* map){
         if (length == 5 && length_5_counter < 1){
 
             ships[0]->dir = dir;
-            if (make_ship(ships[0], dir, map, _x_, _y_) == 0) continue;
+            if (make_ship(ships[0], dir, map_player, _x_, _y_) == 0) continue;
 
             length_5_counter++;
 
@@ -431,14 +493,50 @@ void map_ships_automatically(struct SHIP* ships[], char* map){
 }
 
 
-void draw_board(char *map){
+// this function is used for the bot to shoot its bomb
+void shoot_automatically(){
+    int x ;
+    int y ;
+    
+    scanf("%d",&x);
+    scanf("%d",&y);
+}
 
+
+// this function draws the games momentary boards for player
+void draw_board(char *map_of_shooter, char *map_for_shooter){
+
+    printf("                 ENEMY\n");
+    for (int y = 0 ; y < HEIGHT ; y ++) {
+
+        for (int x = 0; x < WIDTH; x++) {
+
+            if (x == WIDTH - 1) printf(" %c \n", map_for_shooter[x + WIDTH * y]);
+            else printf(" %c |", map_for_shooter[x + WIDTH * y]);
+        }
+
+        if (y < HEIGHT - 1) {
+            for (int x = 0; x < WIDTH; x++) {
+
+                if (x == WIDTH - 1) printf("---\n");
+                else printf("---|");
+            }
+        }
+    }
+
+    printf("\n");
+    for (int i = 0 ; i < WIDTH * 4 - 1 ; i++){
+        printf("&");
+    }
+    printf("\n\n");
+
+    printf("                  YOU\n");
     for (int y = 0 ; y < HEIGHT ; y ++){
 
         for (int x = 0 ; x < WIDTH ; x++) {
 
-            if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
-            else printf(" %c |", map[x + WIDTH * y]);
+            if (x == WIDTH - 1) printf(" %c \n", map_of_shooter[x + WIDTH * y]);
+            else printf(" %c |", map_of_shooter[x + WIDTH * y]);
         }
 
         if (y < HEIGHT - 1){for (int x = 0 ; x < WIDTH; x++) {
@@ -450,74 +548,249 @@ void draw_board(char *map){
     }
 }
 
+
+// this function is used for player to shoot its bomb
+void shoot_manually (char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP* ships[]){
+
+    struct node* a_node;
+
+    int x ;
+    int y ;
+
+    printf("\nYOUR TURN TO ATTACK\n\n");
+
+    printf("enter x :\n\n");
+    scanf("%d",&x);
+    printf("enter y :\n\n");
+    scanf("%d",&y);
+
+    if (map_for_shooter[x + WIDTH * y] != ' ' ){printf("invalid place for shooting\n");}
+    else if (map_for_shooter[x + WIDTH * y] == ' '){
+
+        if (map_enemy[x + WIDTH * y] == 'w'){
+            map_for_shooter[x + WIDTH * y] = 'w';
+            map_enemy[x + WIDTH * y] = 'r';
+
+        }else if(map_enemy[x + WIDTH * y] == 'f'){
+            a_node = getNode(x, y, ships);
+            a_node->status = 'e';
+
+            if (isExploded(getShip(x, y, ships))){
+
+                struct node* current_node = getShip(x, y, ships)->head;
+                struct SHIP* current_ship = getShip(x, y, ships);
+                while (current_node != NULL){
+
+                    current_node->status = 'c';
+
+                    // these codes are for changing the maps blocks status
+                    if (strcmp(getShip(x, y, ships)->dir,"r") == 0){
+
+                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
+                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+
+                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
+
+                    }
+
+                    if (strcmp(getShip(x, y, ships)->dir,"l") == 0){
+
+                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
+                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+
+                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
+                    }
+
+                    if (strcmp(getShip(x, y, ships)->dir,"u") == 0){
+
+                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
+                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
+
+                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
+                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                    }
+
+                    if (strcmp(getShip(x, y, ships)->dir,"d") == 0){
+
+                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
+                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
+
+                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
+                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                    }
+                    current_node = current_node->next;
+                }
+
+                // these are for fixing 1 block upper and lower of head and tail problem of not getting changed in code above
+                if (strcmp(current_ship->dir, "r") == 0){
+
+                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
+                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
+                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'r';
+                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
+                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
+                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'r';
+
+                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+                }
+
+                if (strcmp(current_ship->dir, "l") == 0){
+
+                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
+                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
+                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'r';
+                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
+                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
+                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'r';
+
+                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+                }
+
+                if (strcmp(current_ship->dir, "u") == 0){
+
+                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'r';
+                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'r';
+                    map_enemy[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'r';
+                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'r';
+                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'r';
+                    map_enemy[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'r';
+
+                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'w';
+                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'w';
+
+                }
+
+                if (strcmp(current_ship->dir, "u") == 0){
+
+                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'r';
+                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'r';
+                    map_enemy[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'r';
+                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'r';
+                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'r';
+                    map_enemy[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'r';
+
+                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'w';
+                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'w';
+
+                }
+
+            }else{
+
+                map_enemy[x + WIDTH * y] = 'e';
+                map_for_shooter[x + WIDTH * y] = 'e';
+
+            }
+        }
+    }
+    draw_board(map_of_shooter, map_for_shooter);
+}
+
+
+// this function runs the game
 void Main (){
 
     // games initial options
     int run = true;
     //--------------------- must add code for the WIDTH and HEIGHT input
     //-----------------initializing ships array
-    char *map = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
 
-    for (int i = 0;i < WIDTH * HEIGHT;i++){
-
-        map[i] = 'e';}
-
-    struct SHIP* ships[10];
-
-    ships[0] = malloc (sizeof(struct SHIP));
-    ships[1] = malloc (sizeof(struct SHIP));
-    ships[2] = malloc (sizeof(struct SHIP));
-    ships[3] = malloc (sizeof(struct SHIP));
-    ships[4] = malloc (sizeof(struct SHIP));
-    ships[5] = malloc (sizeof(struct SHIP));
-    ships[6] = malloc (sizeof(struct SHIP));
-    ships[7] = malloc (sizeof(struct SHIP));
-    ships[8] = malloc (sizeof(struct SHIP));
-    ships[9] = malloc (sizeof(struct SHIP));
-
-    ships[0]->head = NULL;
-    ships[1]->head = NULL;
-    ships[2]->head = NULL;
-    ships[3]->head = NULL;
-    ships[4]->head = NULL;
-    ships[5]->head = NULL;
-    ships[6]->head = NULL;
-    ships[7]->head = NULL;
-    ships[8]->head = NULL;
-    ships[9]->head = NULL;
-
-    ships[0]->tail = NULL;
-    ships[1]->tail = NULL;
-    ships[2]->tail = NULL;
-    ships[3]->tail = NULL;
-    ships[4]->tail = NULL;
-    ships[5]->tail = NULL;
-    ships[6]->tail = NULL;
-    ships[7]->tail = NULL;
-    ships[8]->tail = NULL;
-    ships[9]->tail = NULL;
+    char *map_player1_for_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player2_for_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
 
 
-    ships[0]->length = 5;
+    for (int i = 0;i < WIDTH * HEIGHT; i++){
+        map_player1[i] = ' ';
+        map_player2[i] = ' ';
 
-    ships[1]->length = 3;
-    ships[2]->length = 3;
+        map_player1_for_player2[i] = ' ';
+        map_player2_for_player1[i] = ' ';
+    }
 
-    ships[3]->length = 2;
-    ships[4]->length = 2;
-    ships[5]->length = 2;
 
-    ships[6]->length = 1;
-    ships[7]->length = 1;
-    ships[8]->length = 1;
-    ships[9]->length = 1;
+    struct SHIP* player2_ships[10];
+    struct SHIP* player1_ships[10];
 
-    map_ships_manually(ships, map);
-    draw_board(map);
+    for (int i = 0 ; i < total_number_ships ; i++){
+
+        player2_ships[i] = malloc(sizeof(struct SHIP));
+        player2_ships[i]->head = NULL;
+        player2_ships[i]->tail = NULL;
+
+        player1_ships[i] = malloc(sizeof(struct SHIP));
+        player1_ships[i]->head = NULL;
+        player1_ships[i]->tail = NULL;
+    }
+
+    player1_ships[0]->length = 5;
+
+    player1_ships[1]->length = 3;
+    player1_ships[2]->length = 3;
+
+    player1_ships[3]->length = 2;
+    player1_ships[4]->length = 2;
+    player1_ships[5]->length = 2;
+
+    player1_ships[6]->length = 1;
+    player1_ships[7]->length = 1;
+    player1_ships[8]->length = 1;
+    player1_ships[9]->length = 1;
+
+
+    player2_ships[0]->length = 5;
+
+    player2_ships[1]->length = 3;
+    player2_ships[2]->length = 3;
+
+    player2_ships[3]->length = 2;
+    player2_ships[4]->length = 2;
+    player2_ships[5]->length = 2;
+
+    player2_ships[6]->length = 1;
+    player2_ships[7]->length = 1;
+    player2_ships[8]->length = 1;
+    player2_ships[9]->length = 1;
+
+    map_player_ships_manually(player1_ships, map_player1);
+    map_player_ships_manually(player2_ships, map_player2);
+    draw_board(map_player1, map_player2_for_player1);
+    shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
+    //draw_board(map_player2_for_player1, map_player1_for_player2);
 }
 
-int main( )
+
+int main()
 {
+    // the reason im doing this , is getting more control on my program
     Main();
 }
 
@@ -541,4 +814,4 @@ int main( )
 //                        ---|---|---|---|---
 //                         w | w | c | c | w
 
-// a test case : 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d
+// a test case : 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 0 0
