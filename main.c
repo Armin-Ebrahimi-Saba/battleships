@@ -8,7 +8,10 @@ void debug(){
     printf("\ndebug\n");
 }
 
-int WIDTH = 10 , HEIGHT = 10 ,total_number_ships = 10;
+// games option
+int WIDTH = 10 , HEIGHT = 10 ,total_number_ships = 10, turn = 1, largest_length = 5;
+// players information
+int player2_score = 0, player1_score = 0;
 
 
 struct node {
@@ -63,6 +66,18 @@ void append (int x, int y, struct SHIP* ship, char status){
     }
 
 
+}
+
+
+// this function change turn.
+void change_turn(){
+
+    if (turn == 1){
+
+        turn = 2;
+    }else if (turn == 2){
+
+        turn = 1;}
 }
 
 
@@ -171,6 +186,14 @@ int isInside (const char *map_player, struct SHIP* ship){
 }
 
 
+// check if a node is inside the map
+int isIn (int x, int y){
+
+    if (x < WIDTH && y < HEIGHT && x >= 0 && y >= 0) return true;
+    else return false;
+}
+
+
 // check if is there any collision between ships space
 int ifCollision (const char *map_player, struct SHIP* ship){
 
@@ -254,7 +277,7 @@ int isFit(const char *map_player, struct SHIP* ship){
 int make_ship(struct SHIP* ship, char *dir, char *map_player, int _x_, int _y_){
 
     append(_x_, _y_, ship, 'f');
-    ship->dir = dir;
+    ship->dir = strdup(dir);
 
     struct node* current_node;
     current_node = ship->head;
@@ -507,6 +530,7 @@ void shoot_automatically(){
 void draw_board(char *map_of_shooter, char *map_for_shooter){
 
     printf("                 ENEMY\n");
+
     for (int y = 0 ; y < HEIGHT ; y ++) {
 
         for (int x = 0; x < WIDTH; x++) {
@@ -549,27 +573,41 @@ void draw_board(char *map_of_shooter, char *map_for_shooter){
 }
 
 
+// this function adjust score of the players
+void add_score(int length){
+
+    if (turn == 1){
+
+        player1_score += 5 * largest_length/length;
+    }else{
+
+        player2_score += 5 * largest_length/length;
+    }
+}
+
+
 // this function is used for player to shoot its bomb
 void shoot_manually (char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP* ships[]){
 
+    //printf("%s",map_for_shooter)
     struct node* a_node;
 
     int x ;
     int y ;
 
-    printf("\nYOUR TURN TO ATTACK\n\n");
+    printf("\nplayer %d turn\n\n", turn);
 
-    printf("enter x :\n\n");
+    printf("enter x :\n");
     scanf("%d",&x);
-    printf("enter y :\n\n");
+    printf("enter y :\n");
     scanf("%d",&y);
 
     if (map_for_shooter[x + WIDTH * y] != ' ' ){printf("invalid place for shooting\n");}
     else if (map_for_shooter[x + WIDTH * y] == ' '){
 
-        if (map_enemy[x + WIDTH * y] == 'w'){
+        if (map_enemy[x + WIDTH * y] == ' '){
             map_for_shooter[x + WIDTH * y] = 'w';
-            map_enemy[x + WIDTH * y] = 'r';
+            map_enemy[x + WIDTH * y] = 'w';
 
         }else if(map_enemy[x + WIDTH * y] == 'f'){
             a_node = getNode(x, y, ships);
@@ -579,6 +617,9 @@ void shoot_manually (char *map_for_shooter, char *map_of_shooter, char *map_enem
 
                 struct node* current_node = getShip(x, y, ships)->head;
                 struct SHIP* current_ship = getShip(x, y, ships);
+
+                add_score(current_ship->length);
+
                 while (current_node != NULL){
 
                     current_node->status = 'c';
@@ -587,118 +628,127 @@ void shoot_manually (char *map_for_shooter, char *map_of_shooter, char *map_enem
                     if (strcmp(getShip(x, y, ships)->dir,"r") == 0){
 
                         map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
-                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+                        if (isIn(current_node->x, current_node->y - 1)) map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y + 1)) map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
                         map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y - 1)) map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y + 1)) map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
                     }
 
                     if (strcmp(getShip(x, y, ships)->dir,"l") == 0){
 
                         map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
-                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+                        if (isIn(current_node->x, current_node->y - 1)) map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y + 1)) map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
                         map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y - 1)) map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x, current_node->y + 1)) map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
                     }
 
                     if (strcmp(getShip(x, y, ships)->dir,"u") == 0){
 
                         map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
-                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
+                        if (isIn(current_node->x + 1, current_node->y)) map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                        if (isIn(current_node->x - 1, current_node->y)) map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'w';
 
                         map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x + 1, current_node->y)) map_for_shooter[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                        if (isIn(current_node->x - 1, current_node->y)) map_for_shooter[current_node->x - 1 + current_node->y * WIDTH] = 'w';
                     }
 
                     if (strcmp(getShip(x, y, ships)->dir,"d") == 0){
 
                         map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
-                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
+                       if (isIn(current_node->x + 1, current_node->y)) map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                       if (isIn(current_node->x - 1, current_node->y)) map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'w';
 
                         map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                        if (isIn(current_node->x + 1, current_node->y)) map_for_shooter[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                        if (isIn(current_node->x - 1, current_node->y)) map_for_shooter[current_node->x - 1 + current_node->y * WIDTH] = 'w';
                     }
                     current_node = current_node->next;
                 }
 
+                int xt = current_ship->tail->x;
+                int yt = current_ship->tail->y;
+
+                int xh = current_ship->head->x;
+                int yh = current_ship->head->y;
+
                 // these are for fixing 1 block upper and lower of head and tail problem of not getting changed in code above
+
                 if (strcmp(current_ship->dir, "r") == 0){
 
-                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'r';
+                    if (isIn(xh - 1, yh + 1)) map_enemy[xh - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh - 1, yh - 1)) map_enemy[xh - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xh - 1, yh)) map_enemy[xh - 1 + WIDTH * yh] = 'w';
+                    if (isIn(xt + 1, yh - 1)) map_enemy[xt + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt + 1, yh + 1)) map_enemy[xt + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt + 1, yh)) map_enemy[xt + 1 + WIDTH * yh] = 'w';
 
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+                    if (isIn(xh - 1, yh + 1)) map_for_shooter[xh - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh - 1, yh - 1)) map_for_shooter[xh - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xh - 1, yh)) map_for_shooter[xh - 1 + WIDTH * yh] = 'w';
+                    if (isIn(xt + 1, yh - 1)) map_for_shooter[xt + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt + 1, yh + 1)) map_for_shooter[xt + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt + 1, yh)) map_for_shooter[xt + 1 + WIDTH * yh] = 'w';
+
                 }
 
                 if (strcmp(current_ship->dir, "l") == 0){
 
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'r';
+                    if (isIn(xt - 1, yh + 1)) map_enemy[xt - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt - 1, yh - 1)) map_enemy[xt - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt - 1, yh)) map_enemy[xt - 1 + WIDTH * yh] = 'w';
+                    if (isIn(xh + 1, yh - 1)) map_enemy[xh + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xh + 1, yh + 1)) map_enemy[xh + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh + 1, yh)) map_enemy[xh + 1 + WIDTH * yh] = 'w';
 
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'w';
-                }
-
-                if (strcmp(current_ship->dir, "u") == 0){
-
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'r';
-                    map_enemy[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'r';
-
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'w';
+                    if (isIn(xt - 1, yh + 1)) map_for_shooter[xt - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt - 1, yh - 1)) map_for_shooter[xt - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt - 1, yh)) map_for_shooter[xt - 1 + WIDTH * yh] = 'w';
+                    if (isIn(xh + 1, yh - 1)) map_for_shooter[xh + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xh + 1, yh + 1)) map_for_shooter[xh + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh + 1, yh)) map_for_shooter[xh + 1 + WIDTH * yh] = 'w';
 
                 }
 
                 if (strcmp(current_ship->dir, "u") == 0){
 
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'r';
-                    map_enemy[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'r';
+                    if (isIn(xh - 1, yh + 1)) map_enemy[xh - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh + 1, yh + 1)) map_enemy[xh + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh, yh + 1)) map_enemy[xh + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt + 1, yt - 1)) map_enemy[xt + 1 + WIDTH * (yt - 1)] = 'w';
+                    if (isIn(xt - 1, yt - 1)) map_enemy[xt - 1 + WIDTH * (yt - 1)] = 'w';
+                    if (isIn(xt, yt - 1)) map_enemy[xt + WIDTH * (yt - 1)] = 'w';
 
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'w';
+                    if (isIn(xh - 1, yh + 1)) map_for_shooter[xh - 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh + 1, yh + 1)) map_for_shooter[xh + 1 + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xh, yh + 1)) map_for_shooter[xh + WIDTH * (yh + 1)] = 'w';
+                    if (isIn(xt + 1, yt - 1)) map_for_shooter[xt + 1 + WIDTH * (yt - 1)] = 'w';
+                    if (isIn(xt - 1, yt - 1)) map_for_shooter[xt - 1 + WIDTH * (yt - 1)] = 'w';
+                    if (isIn(xt, yt - 1)) map_for_shooter[xt + WIDTH * (yt - 1)] = 'w';
+
+                }
+
+                if (strcmp(current_ship->dir, "d") == 0){
+
+                    if (isIn(xh - 1, yt + 1)) map_enemy[xh - 1 + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xh + 1, yt + 1)) map_enemy[xh + 1 + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xh, yt + 1)) map_enemy[xh + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xt + 1, yh - 1)) map_enemy[xt + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt - 1, yh - 1)) map_enemy[xt - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt, yh - 1)) map_enemy[xt + WIDTH * (yh - 1)] = 'w';
+
+                    if (isIn(xh - 1, yt + 1)) map_for_shooter[xh - 1 + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xh + 1, yt + 1)) map_for_shooter[xh + 1 + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xh, yt + 1)) map_for_shooter[xh + WIDTH * (yt + 1)] = 'w';
+                    if (isIn(xt + 1, yh - 1)) map_for_shooter[xt + 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt - 1, yh - 1)) map_for_shooter[xt - 1 + WIDTH * (yh - 1)] = 'w';
+                    if (isIn(xt, yh - 1)) map_for_shooter[xt + WIDTH * (yh - 1)] = 'w';
 
                 }
 
@@ -706,11 +756,84 @@ void shoot_manually (char *map_for_shooter, char *map_of_shooter, char *map_enem
 
                 map_enemy[x + WIDTH * y] = 'e';
                 map_for_shooter[x + WIDTH * y] = 'e';
-
             }
         }
     }
+
+    change_turn();
     draw_board(map_of_shooter, map_for_shooter);
+}
+
+
+// this function check if the program should run again by checking if ech of players have lost all of his/her ships.
+int ifRun(struct SHIP* player1_ships[], struct SHIP* player2_ships[]){
+
+    for (int i = 0 ; i < total_number_ships ; i++){
+
+       if (isExploded(player1_ships[i]) == false) break;
+       if (i == total_number_ships - 1) return false;
+    }
+
+    for (int i = 0 ; i < total_number_ships ; i++){
+
+       if (isExploded(player2_ships[i]) == false) break;
+       if (i == total_number_ships - 1) return false;
+    }
+    return true;
+}
+
+
+// this function show the main menu of the game.
+void show_menu(void){
+
+    int choice;
+
+    printf("\nPlay with a Friend\n"
+           "2. Play with bot\n"
+           "3. Load last game\n"
+           "4. Settings\n"
+           "5. Score Board\n"
+           "6. Exit\n");
+    scanf("%d",&choice);
+
+    if (choice == 1){
+
+        scanf("%d",&choice);
+        printf("1. choose user\n");
+
+        if (choice == 1){
+
+               printf("1. choose from available users۱\n"
+                      "2. new user\n");
+
+        }
+    }
+
+    else if (choice == 2){
+
+        scanf("%d",&choice);
+    }
+
+    else if (choice == 3){
+
+    }
+
+    else if (choice == 4){
+
+        scanf("%d",&choice);
+        printf("1. Ships\n"
+               "1. Map Size\n"
+               "2. Theme(bonus)\n");
+    }
+
+    else if (choice == 5){
+
+    }
+
+    else if (choice == 6){
+
+    }
+
 }
 
 
@@ -719,6 +842,8 @@ void Main (){
 
     // games initial options
     int run = true;
+    char *junk = malloc(sizeof(char) * 100);
+
     //--------------------- must add code for the WIDTH and HEIGHT input
     //-----------------initializing ships array
     char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
@@ -782,9 +907,27 @@ void Main (){
 
     map_player_ships_manually(player1_ships, map_player1);
     map_player_ships_manually(player2_ships, map_player2);
-    draw_board(map_player1, map_player2_for_player1);
-    shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
-    //draw_board(map_player2_for_player1, map_player1_for_player2);
+
+
+    // start the game
+    while (run) {
+
+        // first of all we check that if we should continue or not
+        run = ifRun(player1_ships, player2_ships);
+
+        if (run){
+
+            shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
+
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+            shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
+
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+        }
+
+    }
 }
 
 
