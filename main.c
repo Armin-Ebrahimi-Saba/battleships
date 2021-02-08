@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 void debug() {
     printf("\ndebug\n");
 }
+
 
 typedef struct {
 
@@ -15,8 +17,30 @@ typedef struct {
 
 } user;
 
+
 // games option
 int WIDTH = 10, HEIGHT = 10, total_number_ships = 10, turn = 1, largest_length = 5, run = true;
+
+// ships information
+int
+count_GreenBay,
+count_GeorgeWashington,
+count_Virginia,
+count_VellaGulf,
+count_Frragut,
+count_Freedom,
+count_Independence,
+count_Pioneer;
+
+int
+HP_GreenBay = 1,
+HP_Freedom = 2,
+HP_Pioneer = 3,
+HP_VellaGulf = 4,
+HP_Independence = 5,
+HP_Frragut = 6,
+HP_Virginia = 7,
+HP_GeorgeWashington = 10;
 
 // rules
 int missile_is_used_1 = false, missile_is_used_2 = false;
@@ -24,7 +48,6 @@ int missile_is_used_1 = false, missile_is_used_2 = false;
 // players information
 int player2_score = 0, player1_score = 0, number_users, place_player1_List, place_player2_List;
 user List_Users[100];
-user Final_List_Users[100];
 
 
 struct node {
@@ -384,8 +407,7 @@ void map_player_ships_manually(struct SHIP *ships[], char *map_player) {
     int length;                           // length is for the length of the boat that the player select
     int _x_;                                // x of head of the ship
     int _y_;                                // y of head of the ship
-    char *dir = malloc(sizeof(char) *
-                       2);     // the direction that the ship has, must choose between u(up), d(down), r(right), l(left)
+    char *dir = malloc(sizeof(char) *2);     // the direction that the ship has, must choose between u(up), d(down), r(right), l(left)
 
     while (length_1_counter + length_2_counter + length_3_counter + length_5_counter < total_number_ships) {
 
@@ -572,6 +594,84 @@ void map_player_ships_automatically(struct SHIP *ships[], char *map_player) {
 }
 
 
+// this function sort_users the users in due to their scores
+void sort_users (){
+
+    int rev = 0;
+    char string[20];
+
+    for (int i = 0;i < number_users;i++){
+
+        if (i != 0 && List_Users[i].score > List_Users[i - 1].score){
+
+            rev = List_Users[i].score;
+            strcpy(string, List_Users[i].name);
+
+            List_Users[i].score = List_Users[i - 1].score;
+            strcpy(List_Users[i].name, List_Users[i - 1].name);
+
+            List_Users[i - 1].score = rev;
+            strcpy(List_Users[i - 1].name, string);
+
+            i = 0;
+        }
+    }
+}
+
+
+// this function saves the information of the users at the end of the game
+void save(char* map_player1, char* map_player2, struct SHIP* player1_ships[], char* map_player2_for_player1, char* map_player1_for_player2, struct SHIP* player2_ships[]){
+
+    // save users score and users
+    List_Users[place_player1_List].score += player1_score;
+    List_Users[place_player2_List].score += player2_score;
+
+    struct SHIP* current_ship = malloc(sizeof(struct SHIP));
+    struct node* current_node = malloc(sizeof(struct node));
+
+    sort_users();
+
+    FILE *file_users = fopen("users.txt", "w");
+
+    for (int i = 0 ; i < number_users ; i++){
+
+        fprintf(file_users, "%s ", List_Users[i].name);
+        fprintf(file_users, "%d\n", List_Users[i].score);
+
+    }
+
+    fclose(file_users);
+}
+
+
+// this function draws the games momentary boards for player
+void draw_board(char *map) {
+
+    for (int y = 0; y < HEIGHT; y++) {
+
+        for (int x = 0; x < WIDTH; x++) {
+
+            if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
+            else printf(" %c |", map[x + WIDTH * y]);
+        }
+
+        if (y < HEIGHT - 1) {
+            for (int x = 0; x < WIDTH; x++) {
+
+                if (x == WIDTH - 1) printf("---\n");
+                else printf("---|");
+            }
+        }
+    }
+
+    printf("\n");
+    for (int i = 0; i < WIDTH * 4 - 1; i++) {
+        printf("&");
+    }
+    printf("\n\n");
+}
+
+
 // this function is used for the bot to shoot its bomb
 void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP *ships[]) {
 
@@ -736,54 +836,6 @@ void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_
 }
 
 
-// this function draws the games momentary boards for player
-void draw_board(char *map_of_shooter, char *map_for_shooter) {
-
-    printf("                 ENEMY\n");
-
-    for (int y = 0; y < HEIGHT; y++) {
-
-        for (int x = 0; x < WIDTH; x++) {
-
-            if (x == WIDTH - 1) printf(" %c \n", map_for_shooter[x + WIDTH * y]);
-            else printf(" %c |", map_for_shooter[x + WIDTH * y]);
-        }
-
-        if (y < HEIGHT - 1) {
-            for (int x = 0; x < WIDTH; x++) {
-
-                if (x == WIDTH - 1) printf("---\n");
-                else printf("---|");
-            }
-        }
-    }
-
-    printf("\n");
-    for (int i = 0; i < WIDTH * 4 - 1; i++) {
-        printf("&");
-    }
-    printf("\n\n");
-
-    printf("                  YOU\n");
-    for (int y = 0; y < HEIGHT; y++) {
-
-        for (int x = 0; x < WIDTH; x++) {
-
-            if (x == WIDTH - 1) printf(" %c \n", map_of_shooter[x + WIDTH * y]);
-            else printf(" %c |", map_of_shooter[x + WIDTH * y]);
-        }
-
-        if (y < HEIGHT - 1) {
-            for (int x = 0; x < WIDTH; x++) {
-
-                if (x == WIDTH - 1) printf("---\n");
-                else printf("---|");
-            }
-        }
-    }
-}
-
-
 // this function adjust score of the players
 void add_score(int length) {
 
@@ -804,8 +856,6 @@ void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct 
 
     struct node *a_node;
 
-    if (map_for_shooter[x + WIDTH * y] != ' ') {printf("invalid place for shooting\n");}
-    else if (map_for_shooter[x + WIDTH * y] == ' ') {
 
         if (map_enemy[x + WIDTH * y] == 'w') {
             map_for_shooter[x + WIDTH * y] = 'w';
@@ -946,15 +996,33 @@ void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct 
 
                 map_enemy[x + WIDTH * y] = 'e';
                 map_for_shooter[x + WIDTH * y] = 'e';
-
             }
-        }
+    }
+
+    // paying the price
+    if (turn == 1) {
+
+        player1_score -= 100;
+        missile_is_used_1 = true;
+
+    }
+    else if (turn == 2) {
+
+        player2_score -= 100;
+        missile_is_used_2 = true;
+
     }
 }
 
 
 // this function is used for player to shoot its bomb
 void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP *ships[]) {
+
+    // showing the board of enemy
+    printf("                 ENEMY\n");
+    draw_board(map_for_shooter);
+    printf("                 YOU\n");
+    draw_board(map_for_shooter);
 
     //printf("%s",map_for_shooter)
     struct node *a_node;
@@ -963,7 +1031,6 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
     int y;
 
     char *ans = malloc(sizeof(char) * 2);
-
     char *dir = malloc(sizeof(char) * 2);
 
 
@@ -973,12 +1040,18 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
     // checking if the player wants to shoot the missile.
     if (turn == 1 && player1_score >= 100 && missile_is_used_1 == false) {
 
-        printf("do you want to shoot you missile?(Y/N):\n");
+        free(ans);
+        ans = malloc(sizeof(char) * 2);
+
+        printf("do you want to shoot your missile?(Y/N):");
         scanf("%s", ans);
 
     } else if (turn == 2 && player2_score >= 100 && missile_is_used_2 == false) {
 
-        printf("do you want to shoot your missile?(Y/N):\n");
+        free(ans);
+        ans = malloc(sizeof(char) * 2);
+
+        printf("do you want to shoot your missile?(Y/N):");
         scanf("%s", ans);
     }
 
@@ -991,7 +1064,7 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
         printf("enter y :");
         scanf("%d", &y);
 
-    } while (map_for_shooter[x + WIDTH * y] != ' ');
+    } while (map_for_shooter[x + WIDTH * y] != ' ' && strcmpi(ans, "n") == 0);
 
     // doing the shooting process
     if (strcmp(ans, "n") == 0 || strcmp(ans, "N") == 0) {
@@ -1001,6 +1074,7 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
             map_enemy[x + WIDTH * y] = 'w';
 
         } else if (map_enemy[x + WIDTH * y] == 'f') {
+
             a_node = getNode(x, y, ships);
             a_node->status = 'e';
 
@@ -1011,7 +1085,7 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
 
                 add_score(current_ship->length);
 
-                while (current_node != NULL) {
+                for (int i = 0 ; i < current_ship->length ; i++) {
 
                     current_node->status = 'c';
 
@@ -1046,7 +1120,6 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
                         if (isIn(current_node->x, current_node->y + 1))
                             map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
                     }
-
                     if (strcmp(getShip(x, y, ships)->dir, "u") == 0) {
 
                         map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
@@ -1076,7 +1149,9 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
                         if (isIn(current_node->x - 1, current_node->y))
                             map_for_shooter[current_node->x - 1 + current_node->y * WIDTH] = 'w';
                     }
+
                     current_node = current_node->next;
+
                 }
 
                 int xt = current_ship->tail->x;
@@ -1156,7 +1231,6 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
                     if (isIn(xt + 1, yh - 1)) map_for_shooter[xt + 1 + WIDTH * (yh - 1)] = 'w';
                     if (isIn(xt - 1, yh - 1)) map_for_shooter[xt - 1 + WIDTH * (yh - 1)] = 'w';
                     if (isIn(xt, yh - 1)) map_for_shooter[xt + WIDTH * (yh - 1)] = 'w';
-
                 }
 
             } else {
@@ -1170,7 +1244,6 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
         scanf("%s", dir);
 
         if (strcmp(dir, "d") == 0 || strcmp(dir, "u") == 0) {
-
 
             for (int i = 0; i < HEIGHT; i++) {
 
@@ -1189,7 +1262,9 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
     }
 
     change_turn();
-    draw_board(map_of_shooter, map_for_shooter);
+
+    printf("\n\n\n                 ENEMY\n");
+    draw_board(map_for_shooter);
 }
 
 
@@ -1208,6 +1283,73 @@ int ifRun(struct SHIP *player1_ships[], struct SHIP *player2_ships[]) {
         if (i == total_number_ships - 1) return false;
     }
     return true;
+}
+
+
+// this function show the sample for the maps to the player while choosing the theme
+void show_sample(){
+
+    char separator[] = {'a' + 79, 'a' + 80, 'a' + 81, '|', '$', '*'};
+    char *map_name[] = {"Shady1", "Shady2", "Shady3", "Line", "Money", "Star"};
+
+    int x = 0 , y = 0 ;
+
+    for( int i = 0 ; i < 6 ; i++) {
+
+        printf("                 %s\n\n", map_name[i]);
+
+
+        while (y < 2 * HEIGHT - 1) {
+
+            if (y % 2 != 0) {
+
+                if (x < WIDTH - 1) {
+
+                    if (i == 3) {
+                        printf("---%c", separator[i]);
+                        x++;
+                    }
+
+                    else {
+                        printf("%c%c%c%c", separator[i], separator[i], separator[i], separator[i]);
+                        x++;
+                    }
+
+                } else {
+                    if (i == 3) {
+                        printf("---\n");
+                        x = 0;
+                        y++;
+                        continue;
+                    }
+
+                    else {
+                        printf("%c%c%c\n", separator[i],separator[i],separator[i]);
+                        x = 0;
+                        y++;
+                        continue;
+                    }
+                }
+
+            } else {
+                if (x < WIDTH - 1) {
+                    printf(" w %c", separator[i]);
+                    x++;
+                } else {
+                    printf(" w \n");
+                    y++;
+                    x = 0;
+                }
+
+            }
+        }
+
+        x = 0 ;
+        y = 0 ;
+
+        printf("\n\n");
+    }
+
 }
 
 
@@ -1233,6 +1375,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
     }
     number_users = k;
     k = 0;
+
     // finished initializing
 
     // showing the main menu
@@ -1248,7 +1391,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
         scanf("%d", &choice);
 
-    }while (choice != 1 || choice != 2 || choice != 3 || choice != 4 || choice != 5 || choice != 6);
+    }while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
 
     if (choice == 1) {
 
@@ -1326,7 +1469,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 1 || choice != 2);
+        }while (choice != 1 && choice != 2);
 
         if (choice == 1) {
 
@@ -1349,13 +1492,13 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
         printf("            1. choose from available users\n"
                "            2. new user\n");
 
-        // choosing the user inf
+        // choosing the user information
 
         do {
 
             scanf("%d", &choice);
 
-        }while (choice != 1 || choice != 2);
+        }while (choice != 1 && choice != 2);
 
         // new user
         if (choice == 2) {
@@ -1368,18 +1511,19 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
             // check if the user is already in use or not
             while (i < number_users) {
 
-                if (strcmpi(new_user2, List_Users[i].name) == 0 || strcmpi(new_user2, new_user1) == 0) {
+                if (strcmpi(new_user2, List_Users[i].name) == 0) {
 
                     printf("%s is already in use\n", new_user2);
                     printf("username: ");
                     scanf("%s", new_user2);
+
 
                     i = 0;
                 }
                 i++;
             }
 
-            // affecting the new users to games information
+            // affecting the new users to the games information
             number_users++;
             strcpy(List_Users[number_users - 1].name, new_user2);
             List_Users[number_users - 1].score = 0;
@@ -1415,7 +1559,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 3 || choice != 4 || choice != 5 || choice != 6);
+        }while (choice != 1 && choice != 2);
 
         if (choice == 1) {
             map_player_ships_automatically(player2_ships, map_player2);
@@ -1425,6 +1569,19 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
             map_player_ships_manually(player2_ships, map_player2);
         }
         //-----------------------------------------------------------------------
+        // showing the menu again
+        printf("\n"
+               "4. Settings\n"
+               "5. Score Board\n"
+               "6. Exit\n");
+
+        do {
+
+            scanf("%d", &choice);
+
+        }while (choice != 4 && choice != 5 && choice != 6);
+
+
     }
     // playing with bot
     else if (choice == 2){
@@ -1444,7 +1601,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 3 || choice != 4 || choice != 5 || choice != 6);
+        }while (choice != 3 && choice != 4 && choice != 5 && choice != 6);
 
         // new user
         if (choice == 2) {
@@ -1503,7 +1660,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 1 || choice != 2);
+        }while (choice != 1 && choice != 2);
 
         if (choice == 1) {
             map_player_ships_automatically(player1_ships, map_player1);
@@ -1516,27 +1673,119 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
         // put the bots ships
         map_player_ships_automatically(player2_ships, map_player2);
         //-----------------------------------------------------------------------
+        // showing the menu again
+        printf("\n"
+               "4. Settings\n"
+               "5. Score Board\n"
+               "6. Exit\n");
+
+        do {
+
+            scanf("%d", &choice);
+
+        }while (choice != 4 && choice != 5 && choice != 6);
+
+    }
+
+    if (choice == 4){
+
+        printf("\n"
+               "1.Ships\n"
+               "2.Map Size\n"
+               "3.Theme\n"
+               "4.return\n");
+
+        do{
+            scanf("%d", &choice);
+        }while(choice < 1 || choice > 3);
+
+        while (choice != 4){
+
+            if (choice == 1) {
+                printf("\nchoose the number of each ship");
+
+                printf("\nboat(HP = 1):");
+                scanf("%d", &count_GreenBay);
+
+                printf("\nx(HP = 2):");
+                scanf("%d", &count_Freedom);
+
+                printf("\nx(HP = 3):");
+                scanf("%d", &count_Pioneer);
+
+                printf("\nx(HP = 4):");
+                scanf("%d", &count_VellaGulf);
+
+                printf("\nx(HP = 5):");
+                scanf("%d", &count_Independence);
+
+                printf("\nx(HP = 6):");
+                scanf("%d", &count_Frragut);
+
+                printf("\nx(HP = 7):");
+                scanf("%d", &count_Virginia);
+
+                printf("\nx(HP = 10):");
+                scanf("%d", &count_GeorgeWashington);
+            }
+
+            if (choice == 2) {
+
+                printf("WIDTH:");
+                scanf("%d", &WIDTH);
+
+                printf("HEIGHT:");
+                scanf("%d", &HEIGHT);
+
+            }
+
+            if (choice == 3) {
+
+                show_sample();
+
+                printf("choose your map:");
+                scanf("%d", &choice);
+
+            }
+            scanf("%d", &choice);
+        }
+
+        //showing menu
+        printf("\n"
+               "4. Settings\n"
+               "5. Score Board\n"
+               "6. Exit\n");
+
+        do {
+
+            scanf("%d", &choice);
+
+        }while (choice != 4 && choice != 5 && choice != 6);
+
     }
 
 
-    printf("\n"
-           "3. Load last game\n"
-           "4. Settings\n"
-           "5. Score Board\n"
-           "6. Exit\n");
-
-    do {
-
-        scanf("%d", &choice);
-
-    }while (choice != 3 || choice != 4 || choice != 5 || choice != 6);
 
     if (choice == 5){
 
+        sort_users();
         for (int i = 0  ; i < number_users ; i ++){
 
-            printf("%d. %20.s %d\n", i, List_Users[i].name, List_Users[i].score);
+            printf("%d. %s %4d\n", i, List_Users[i].name, List_Users[i].score);
         }
+
+        // showing menu
+        printf("\n"
+               "4. Settings\n"
+               "5. Score Board\n"
+               "6. Exit\n");
+
+        do {
+
+            scanf("%d", &choice);
+
+        }while (choice != 4 && choice != 5 && choice != 6);
+
     }
 
     if (choice == 6){
@@ -1547,72 +1796,9 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 }
 
 
-// this function saves the information of the users at the end of the game
-void save(){
+// load last game
+void load_last_game(){
 
-    FILE *file_users = fopen("users.txt", "w");
-
-    for (int i = 0 ; i < number_users ; i++){
-
-        fprintf(file_users, "%s %d\n", Final_List_Users[i].name, Final_List_Users[i].score);
-    }
-}
-
-
-// this function if a string is in the Final_List
-int isInList (char string[], int len_list){
-
-    for (int i = 0 ; i < len_list ; i++){
-
-        if (strcmpi(string, Final_List_Users[i].name) == 0){
-
-            return true;
-        }
-    }
-    return false;
-
-}
-
-
-
-// this function sort the users in due to their scores
-void sort (){
-
-    FILE *users_file = fopen("user.txt", "w");
-
-    int max = 0;
-    char *string = malloc(sizeof(char) * 20);
-
-    int j = 0;
-    int i = 0;
-
-    while (i < number_users){
-
-        while (j < number_users) {
-
-            if (List_Users[j].score > max) {
-
-                if (isInList(List_Users[j].name, i) == true){
-                    j++;
-                    continue;
-                }
-
-                max = List_Users[i].score;
-                string = List_Users[i].name;
-
-            }
-            j++;
-        }
-
-        strcpy(Final_List_Users[i].name, string);
-        Final_List_Users[i].score = max;
-
-        i++;
-
-        j = 0;
-        max = 0;
-
-    }
 
 }
 
@@ -1687,6 +1873,7 @@ void Main() {
 
     show_menu(player1_ships, map_player1, player2_ships, map_player2);
 
+
     // start the game
     while (run) {
 
@@ -1696,16 +1883,18 @@ void Main() {
         if (run) {
 
             shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
-
-            printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
             shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
-
-            printf("\n\n\n\n\n\n\n\n\n\n\n\n");
+            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         }
 
     }
+
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nGAME OVER");
 }
 
 
@@ -1735,3 +1924,140 @@ int main() {
 //                         w | w | c | c | w
 
 // a test case : 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 0 0
+
+//               Shady1
+
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+//
+//
+//                Shady2
+//
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+//
+//
+//                 Shady3
+//
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+//
+//
+//                 Line
+//
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+// ---|---|---|---|---|---|---|---|---|---
+//  w | w | w | w | w | w | w | w | w | w
+//
+//
+//                 Money
+//
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+// w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//  w $ w $ w $ w $ w $ w $ w $ w $ w $ w
+//
+//
+//                 Star
+//
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
+// ***************************************
+//  w * w * w * w * w * w * w * w * w * w
