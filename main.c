@@ -19,18 +19,25 @@ typedef struct {
 
 
 // games option
-int WIDTH = 10, HEIGHT = 10, total_number_ships = 10, turn = 1, largest_length = 5, run = true;
+int
+WIDTH = 10,
+HEIGHT = 10,
+total_number_ships = 10,
+turn = 1,
+largest_length = 5,
+run = true,
+separator_code = 3;
 
 // ships information
 int
-count_GreenBay,
-count_GeorgeWashington,
-count_Virginia,
-count_VellaGulf,
-count_Frragut,
-count_Freedom,
-count_Independence,
-count_Pioneer;
+count_GreenBay = 4,
+count_Freedom = 3,
+count_Pioneer = 2,
+count_VellaGulf = 0,
+count_Independence = 1,
+count_Frragut = 0,
+count_Virginia = 0,
+count_GeorgeWashington = 0;
 
 int
 HP_GreenBay = 1,
@@ -46,7 +53,7 @@ HP_GeorgeWashington = 10;
 int missile_is_used_1 = false, missile_is_used_2 = false;
 
 // players information
-int player2_score = 0, player1_score = 0, number_users, place_player1_List, place_player2_List;
+int player2_score = 0, player1_score = 0, number_users = 0, place_player1_List, place_player2_List;
 user List_Users[100];
 
 
@@ -623,8 +630,8 @@ void sort_users (){
 void save(char* map_player1, char* map_player2, struct SHIP* player1_ships[], char* map_player2_for_player1, char* map_player1_for_player2, struct SHIP* player2_ships[]){
 
     // save users score and users
-    List_Users[place_player1_List].score += player1_score;
-    List_Users[place_player2_List].score += player2_score;
+    List_Users[place_player1_List].score = player1_score;
+    List_Users[place_player2_List].score = player2_score;
 
     struct SHIP* current_ship = malloc(sizeof(struct SHIP));
     struct node* current_node = malloc(sizeof(struct node));
@@ -638,37 +645,168 @@ void save(char* map_player1, char* map_player2, struct SHIP* player1_ships[], ch
         fprintf(file_users, "%s ", List_Users[i].name);
         fprintf(file_users, "%d\n", List_Users[i].score);
 
+        printf("%s ", List_Users[i].name);
+        printf("%d\n", List_Users[i].score);
+
     }
 
     fclose(file_users);
+
+}
+
+
+// this function save the entire game
+void record_game(char* map_player1 , char* map_player2){
+
+    FILE* RECORD = fopen("RECORD.txt", "a");
+
+    fprintf(RECORD, "\n               PLAYER 1\n");
+    // loop for drawing the players map
+    for (int y = 0; y < HEIGHT; y++) {
+
+        for (int x = 0; x < WIDTH; x++) {
+
+            if (x == WIDTH - 1) fprintf(RECORD, " %c \n", map_player1[x + WIDTH * y]);
+            else fprintf(RECORD, " %c |", map_player1[x + WIDTH * y]);
+
+        }
+
+        if (y < HEIGHT - 1) {
+            for (int x = 0; x < WIDTH; x++) {
+
+                if (x == WIDTH - 1) fprintf(RECORD, "---\n");
+                else fprintf(RECORD, "---|");
+            }
+        }
+    }
+
+    // this separates the maps
+    fprintf(RECORD,"\n");
+    for (int i = 0; i < WIDTH * 4 - 1; i++) {
+        fprintf(RECORD, "&");
+    }
+    fprintf(RECORD, "\n\n");
+
+
+    fprintf(RECORD, "\n               PLAYER 2\n");
+    // loop for drawing the players 2 map
+    for (int y = 0; y < HEIGHT; y++) {
+
+        for (int x = 0; x < WIDTH; x++) {
+
+            if (x == WIDTH - 1) fprintf(RECORD, " %c \n", map_player2[x + WIDTH * y]);
+            else fprintf(RECORD, " %c |", map_player2[x + WIDTH * y]);
+
+        }
+
+        if (y < HEIGHT - 1) {
+            for (int x = 0; x < WIDTH; x++) {
+
+                if (x == WIDTH - 1) fprintf(RECORD, "---\n");
+                else fprintf(RECORD, "---|");
+            }
+        }
+    }
+
+    // this separates the maps
+    fprintf(RECORD,"\n");
+    for (int i = 0; i < WIDTH * 4 - 1; i++) {
+        fprintf(RECORD, "&");
+    }
+    fprintf(RECORD, "\n\n");
+
+    // closing the file
+    fclose(RECORD);
+
+}
+
+
+// this function show the entire games moves
+void play_back(char* recorder){
+
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+    FILE* PLAY_BACK = fopen("RECORD.txt", "r");
+
+    while (!(feof(PLAY_BACK))){
+
+        fgets(recorder, 100000, PLAY_BACK);
+        printf("%s", recorder);
+
+    }
+
+    fclose(PLAY_BACK);
 }
 
 
 // this function draws the games momentary boards for player
 void draw_board(char *map) {
 
-    for (int y = 0; y < HEIGHT; y++) {
+    // theme options
+    char separators[] = {'a' + 79, 'a' + 80, 'a' + 81, '|', '$', '*'};
+    char *map_name[] = {"Shady1", "Shady2", "Shady3", "Line", "Money", "Star"};
 
-        for (int x = 0; x < WIDTH; x++) {
+    // loop for drawing the map
+    if (separator_code == 3) {
+        for (int y = 0; y < HEIGHT; y++) {
 
-            if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
-            else printf(" %c |", map[x + WIDTH * y]);
-        }
-
-        if (y < HEIGHT - 1) {
             for (int x = 0; x < WIDTH; x++) {
 
-                if (x == WIDTH - 1) printf("---\n");
-                else printf("---|");
+                if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
+                else printf(" %c |", map[x + WIDTH * y]);
+            }
+
+            if (y < HEIGHT - 1) {
+                for (int x = 0; x < WIDTH; x++) {
+
+                    if (x == WIDTH - 1) printf("---\n");
+                    else printf("---|");
+                }
             }
         }
     }
 
+    else {
+
+        for (int y = 0; y < HEIGHT; y++) {
+
+            for (int x = 0; x < WIDTH; x++) {
+
+                if (x == WIDTH - 1) printf(" %c \n", map[x + WIDTH * y]);
+                else printf(" %c %c", map[x + WIDTH * y], separators[separator_code - 1]);
+            }
+
+            if (y < HEIGHT - 1) {
+                for (int x = 0; x < WIDTH; x++) {
+
+                    if (x == WIDTH - 1) printf("%c%c%c\n", separators[separator_code - 1], separators[separator_code - 1], separators[separator_code - 1]);
+                    else printf("%c%c%c%c", separators[separator_code - 1], separators[separator_code - 1], separators[separator_code - 1], separators[separator_code - 1]);
+                }
+            }
+        }
+    }
+
+    // this separates the maps
     printf("\n");
     for (int i = 0; i < WIDTH * 4 - 1; i++) {
         printf("&");
     }
     printf("\n\n");
+}
+
+
+// this function adjust score of the players
+void add_score(int length) {
+
+    if (turn == 1) {
+
+        player1_score += 5 * ((float)largest_length /(float) length) + 1;
+
+    } else {
+
+        player2_score += 5 * ((float)largest_length /(float) length) + 1;
+
+    }
 }
 
 
@@ -702,7 +840,10 @@ void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_
 
             struct node *current_node = getShip(x, y, ships)->head;
             struct SHIP *current_ship = getShip(x, y, ships);
-            while (current_node != NULL) {
+
+            add_score(current_ship->length);
+
+            for(int i = 0 ; i < current_ship->length ; i++) {
 
                 current_node->status = 'c';
 
@@ -830,24 +971,21 @@ void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_
             map_enemy[x + WIDTH * y] = 'e';
             map_for_shooter[x + WIDTH * y] = 'e';
 
+            if (turn == 1){
+
+                player1_score += 1;
+
+            }
+
+            else if (turn == 2){
+
+                player2_score += 1;
+
+            }
+
         }
     }
 
-}
-
-
-// this function adjust score of the players
-void add_score(int length) {
-
-    if (turn == 1) {
-
-        player1_score += 5 * largest_length / length;
-
-    } else {
-
-        player2_score += 5 * largest_length / length;
-
-    }
 }
 
 
@@ -857,160 +995,164 @@ void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct 
     struct node *a_node;
 
 
-        if (map_enemy[x + WIDTH * y] == 'w') {
-            map_for_shooter[x + WIDTH * y] = 'w';
-            map_enemy[x + WIDTH * y] = 'r';
+    if (map_enemy[x + WIDTH * y] == ' ') {
 
-        } else if (map_enemy[x + WIDTH * y] == 'f') {
-            a_node = getNode(x, y, ships);
-            a_node->status = 'e';
+        map_for_shooter[x + WIDTH * y] = 'w';
+        map_enemy[x + WIDTH * y] = 'w';
 
-            if (isExploded(getShip(x, y, ships))) {
+    } else if (map_enemy[x + WIDTH * y] == 'f') {
 
-                struct node *current_node = getShip(x, y, ships)->head;
-                struct SHIP *current_ship = getShip(x, y, ships);
-                while (current_node != NULL) {
+        a_node = getNode(x, y, ships);
+        a_node->status = 'e';
 
-                    current_node->status = 'c';
+        if (isExploded(getShip(x, y, ships))) {
 
-                    // these codes are for changing the maps blocks status
-                    if (strcmp(getShip(x, y, ships)->dir, "r") == 0) {
+            struct node *current_node = getShip(x, y, ships)->head;
+            struct SHIP *current_ship = getShip(x, y, ships);
 
-                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
-                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+            add_score(current_ship->length);
 
-                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
+            for (int i = 0; i < current_ship->length; i++) {
 
-                    }
+                current_node->status = 'c';
 
-                    if (strcmp(getShip(x, y, ships)->dir, "l") == 0) {
+                // these codes are for changing the maps blocks status
+                if (strcmp(getShip(x, y, ships)->dir, "r") == 0) {
 
-                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'r';
-                        map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'r';
+                    map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                    map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
-                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
-                    }
-
-                    if (strcmp(getShip(x, y, ships)->dir, "u") == 0) {
-
-                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
-                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
-
-                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
-                    }
-
-                    if (strcmp(getShip(x, y, ships)->dir, "d") == 0) {
-
-                        map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'r';
-                        map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'r';
-
-                        map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
-                        map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
-                        map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
-                    }
-                    current_node = current_node->next;
-                }
-
-                // these are for fixing 1 block upper and lower of head and tail problem of not getting changed in code above
-                if (strcmp(current_ship->dir, "r") == 0) {
-
-                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'r';
-
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'w';
-                }
-
-                if (strcmp(current_ship->dir, "l") == 0) {
-
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'r';
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'r';
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'r';
-
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'w';
-                }
-
-                if (strcmp(current_ship->dir, "u") == 0) {
-
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'r';
-                    map_enemy[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'r';
-
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'w';
+                    map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                    map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
                 }
 
-                if (strcmp(current_ship->dir, "u") == 0) {
+                if (strcmp(getShip(x, y, ships)->dir, "l") == 0) {
 
-                    map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'r';
-                    map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'r';
-                    map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'r';
-                    map_enemy[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'r';
+                    map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_enemy[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                    map_enemy[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
 
-                    map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'w';
-                    map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'w';
-                    map_for_shooter[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'w';
-
+                    map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_for_shooter[current_node->x + (current_node->y - 1) * WIDTH] = 'w';
+                    map_for_shooter[current_node->x + (current_node->y + 1) * WIDTH] = 'w';
                 }
 
-            } else {
+                if (strcmp(getShip(x, y, ships)->dir, "u") == 0) {
 
-                map_enemy[x + WIDTH * y] = 'e';
-                map_for_shooter[x + WIDTH * y] = 'e';
+                    map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                    map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'w';
+
+                    map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
+                    map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                }
+
+                if (strcmp(getShip(x, y, ships)->dir, "d") == 0) {
+
+                    map_enemy[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_enemy[current_node->x + 1 + current_node->y * WIDTH] = 'w';
+                    map_enemy[current_node->x - 1 + current_node->y * WIDTH] = 'w';
+
+                    map_for_shooter[current_node->x + current_node->y * WIDTH] = 'c';
+                    map_for_shooter[current_node->x + 1 + (current_node->y - 1) * WIDTH] = 'w';
+                    map_for_shooter[current_node->x - 1 + (current_node->y + 1) * WIDTH] = 'w';
+                }
+                current_node = current_node->next;
             }
-    }
 
-    // paying the price
-    if (turn == 1) {
+            // these are for fixing 1 block upper and lower of head and tail problem of not getting changed in code above
+            if (strcmp(current_ship->dir, "r") == 0) {
 
-        player1_score -= 100;
-        missile_is_used_1 = true;
+                map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                map_enemy[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                map_enemy[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'w';
 
-    }
-    else if (turn == 2) {
+                map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                map_for_shooter[current_ship->head->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                map_for_shooter[current_ship->tail->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+            }
 
-        player2_score -= 100;
-        missile_is_used_2 = true;
+            if (strcmp(current_ship->dir, "l") == 0) {
 
+                map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                map_enemy[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                map_enemy[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+
+                map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y + 1)] = 'w';
+                map_for_shooter[current_ship->tail->x - 1 + WIDTH * (current_ship->head->y - 1)] = 'w';
+                map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y] = 'w';
+                map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y - 1)] = 'w';
+                map_for_shooter[current_ship->head->x + 1 + WIDTH * (current_ship->tail->y + 1)] = 'w';
+                map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y] = 'w';
+            }
+
+            if (strcmp(current_ship->dir, "u") == 0) {
+
+                map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                map_enemy[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'w';
+                map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                map_enemy[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'w';
+
+                map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->head->y - 1] = 'w';
+                map_for_shooter[current_ship->tail->x + WIDTH * current_ship->head->y - 1] = 'w';
+                map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->tail->y + 1] = 'w';
+                map_for_shooter[current_ship->head->x + WIDTH * current_ship->tail->y + 1] = 'w';
+
+            }
+
+            if (strcmp(current_ship->dir, "u") == 0) {
+
+                map_enemy[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_enemy[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_enemy[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_enemy[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                map_enemy[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                map_enemy[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'w';
+
+                map_for_shooter[current_ship->tail->x - 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_for_shooter[current_ship->tail->x + 1 + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_for_shooter[current_ship->tail->x + WIDTH * current_ship->tail->y - 1] = 'w';
+                map_for_shooter[current_ship->head->x + 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                map_for_shooter[current_ship->head->x - 1 + WIDTH * current_ship->head->y + 1] = 'w';
+                map_for_shooter[current_ship->head->x + WIDTH * current_ship->head->y + 1] = 'w';
+
+            }
+
+        } else {
+
+            map_enemy[x + WIDTH * y] = 'e';
+            map_for_shooter[x + WIDTH * y] = 'e';
+
+            if (turn == 1){
+
+                player1_score += 1;
+
+            }
+
+            else if (turn == 2){
+
+                player2_score += 1;
+
+            }
+
+        }
     }
 }
 
@@ -1022,9 +1164,8 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
     printf("                 ENEMY\n");
     draw_board(map_for_shooter);
     printf("                 YOU\n");
-    draw_board(map_for_shooter);
+    draw_board(map_of_shooter);
 
-    //printf("%s",map_for_shooter)
     struct node *a_node;
 
     int x;
@@ -1237,10 +1378,26 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
 
                 map_enemy[x + WIDTH * y] = 'e';
                 map_for_shooter[x + WIDTH * y] = 'e';
+
+                if (turn == 1){
+
+                    player1_score++;
+
+                }
+
+                else if (turn == 2){
+
+                    player2_score++;
+
+                }
+
             }
         }
-    } else if (strcmp(ans, "y") == 0 || strcmp(ans, "Y") == 0) {
+    }
 
+    else if (strcmp(ans, "y") == 0 || strcmp(ans, "Y") == 0) {
+
+        printf("add the direction ( r, l, u, d )");
         scanf("%s", dir);
 
         if (strcmp(dir, "d") == 0 || strcmp(dir, "u") == 0) {
@@ -1259,12 +1416,23 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
             }
         }
 
+        // paying the price
+        if (turn == 1) {
+
+            player1_score -= 100;
+            missile_is_used_1 = true;
+
+        }
+        else if (turn == 2) {
+
+            player2_score -= 100;
+            missile_is_used_2 = true;
+
+        }
+
     }
 
     change_turn();
-
-    printf("\n\n\n                 ENEMY\n");
-    draw_board(map_for_shooter);
 }
 
 
@@ -1287,7 +1455,7 @@ int ifRun(struct SHIP *player1_ships[], struct SHIP *player2_ships[]) {
 
 
 // this function show the sample for the maps to the player while choosing the theme
-void show_sample(){
+void show_themes(){
 
     char separator[] = {'a' + 79, 'a' + 80, 'a' + 81, '|', '$', '*'};
     char *map_name[] = {"Shady1", "Shady2", "Shady3", "Line", "Money", "Star"};
@@ -1296,7 +1464,7 @@ void show_sample(){
 
     for( int i = 0 ; i < 6 ; i++) {
 
-        printf("                 %s\n\n", map_name[i]);
+        printf("                 %d.%s\n\n", i + 1, map_name[i]);
 
 
         while (y < 2 * HEIGHT - 1) {
@@ -1373,6 +1541,8 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
         fscanf(users_file, "%d", &List_Users[k].score);
         k++;
     }
+
+    fclose(users_file);
     number_users = k;
     k = 0;
 
@@ -1414,6 +1584,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%s",new_user1);
             int i = 0;
+
             // check if the user is already in use or not
             while (i < number_users) {
 
@@ -1430,8 +1601,8 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             // affecting the new users to games information
             number_users++;
-            strcpy(List_Users[k].name, new_user1);
-            List_Users[k].score = 0;
+            strcpy(List_Users[number_users - 1].name, new_user1);
+            List_Users[number_users - 1].score = 0;
 
             place_player1_List = number_users - 1;
 
@@ -1446,7 +1617,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             for (int j = 0; j < number_users; j++) {
 
-                printf("%d. %20.s %d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
             }
 
             do {
@@ -1505,7 +1676,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             printf("username:");
 
-            scanf("%s",new_user1);
+            scanf("%s",new_user2);
             int i = 0;
 
             // check if the user is already in use or not
@@ -1541,7 +1712,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             for (int j = 0; j < number_users; j++) {
 
-                printf("%d. %20.s %d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
             }
 
             scanf("%d", &choice);
@@ -1580,9 +1751,8 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
             scanf("%d", &choice);
 
         }while (choice != 4 && choice != 5 && choice != 6);
-
-
     }
+
     // playing with bot
     else if (choice == 2){
 
@@ -1607,7 +1777,6 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
         if (choice == 2) {
 
             printf("username:");
-
             scanf("%s", new_user2);
             int i = 0;
             // check if the user is already in use or not
@@ -1626,8 +1795,8 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             // affecting the new users to games information
             number_users++;
-            strcpy(List_Users[k].name, new_user2);
-            List_Users[k].score = 0;
+            strcpy(List_Users[number_users - 1].name, new_user2);
+            List_Users[number_users -1].score = 0;
 
             place_player1_List = number_users - 1;
 
@@ -1642,7 +1811,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             for (int j = 0; j < number_users; j++) {
 
-                printf("%d. %20.s %d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
             }
 
             scanf("%d", &choice);
@@ -1670,8 +1839,10 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
             map_player_ships_manually(player1_ships, map_player1);
         }
         //-----------------------------------------------------------------------
+
         // put the bots ships
         map_player_ships_automatically(player2_ships, map_player2);
+
         //-----------------------------------------------------------------------
         // showing the menu again
         printf("\n"
@@ -1704,29 +1875,35 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
             if (choice == 1) {
                 printf("\nchoose the number of each ship");
 
-                printf("\nboat(HP = 1):");
+                printf("\nGreenBay(HP = 1):");
                 scanf("%d", &count_GreenBay);
 
-                printf("\nx(HP = 2):");
+                printf("\nFreedom(HP = 2):");
                 scanf("%d", &count_Freedom);
 
-                printf("\nx(HP = 3):");
+                printf("\nPioneer(HP = 3):");
                 scanf("%d", &count_Pioneer);
 
-                printf("\nx(HP = 4):");
+                printf("\nVellaGulf(HP = 4):");
                 scanf("%d", &count_VellaGulf);
 
-                printf("\nx(HP = 5):");
+                printf("\nIndependence(HP = 5):");
                 scanf("%d", &count_Independence);
 
-                printf("\nx(HP = 6):");
+                printf("\nFrragut(HP = 6):");
                 scanf("%d", &count_Frragut);
 
-                printf("\nx(HP = 7):");
+                printf("\nVirginia(HP = 7):");
                 scanf("%d", &count_Virginia);
 
-                printf("\nx(HP = 10):");
+                printf("\nGeorgeWashington(HP = 10):");
                 scanf("%d", &count_GeorgeWashington);
+
+                printf("\n"
+                       "1.Ships\n"
+                       "2.Map Size\n"
+                       "3.Theme\n"
+                       "4.return\n");
             }
 
             if (choice == 2) {
@@ -1737,21 +1914,43 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
                 printf("HEIGHT:");
                 scanf("%d", &HEIGHT);
 
+                printf("\n"
+                       "1.Ships\n"
+                       "2.Map Size\n"
+                       "3.Theme\n"
+                       "4.return\n");
+
             }
 
             if (choice == 3) {
 
-                show_sample();
+                show_themes();
 
-                printf("choose your map:");
-                scanf("%d", &choice);
+                // choosing the theme
+                printf("choose your theme:");
+                do {
+                    scanf("%d", &choice);
+                }while (choice > 5 || choice < 0);
+                //
+                separator_code = choice;
+
+                printf("\n"
+                       "1.Ships\n"
+                       "2.Map Size\n"
+                       "3.Theme\n"
+                       "4.return\n");
 
             }
+
             scanf("%d", &choice);
+
         }
 
         //showing menu
         printf("\n"
+               "1. Play with a Friend\n"
+               "2. Play with bot\n"
+               "3. Load last game\n"
                "4. Settings\n"
                "5. Score Board\n"
                "6. Exit\n");
@@ -1760,7 +1959,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 4 && choice != 5 && choice != 6);
+        }while (choice != 4 && choice != 5 && choice != 6 && choice != 1 && choice != 2 && choice != 3);
 
     }
 
@@ -1776,6 +1975,9 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
         // showing menu
         printf("\n"
+               "1. Play with a Friend\n"
+               "2. Play with bot\n"
+               "3. Load last game\n"
                "4. Settings\n"
                "5. Score Board\n"
                "6. Exit\n");
@@ -1784,7 +1986,7 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
 
             scanf("%d", &choice);
 
-        }while (choice != 4 && choice != 5 && choice != 6);
+        }while (choice != 4 && choice != 5 && choice != 6 && choice != 1 && choice != 2 && choice != 3);
 
     }
 
@@ -1803,10 +2005,115 @@ void load_last_game(){
 }
 
 
-// this function runs the game
-void Main() {
+//// this function runs the game
+//void Main() {
+//
+//    // games initial options
+//    char *junk = malloc(sizeof(char) * 100);
+//
+//    //--------------------- must add code for the WIDTH and HEIGHT input
+//    //-----------------initializing ships array
+//    char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+//    char *map_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+//
+//    char *map_player1_for_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+//    char *map_player2_for_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+//
+//
+//    for (int i = 0; i < WIDTH * HEIGHT; i++) {
+//
+//        map_player1[i] = ' ';
+//        map_player2[i] = ' ';
+//
+//        map_player1_for_player2[i] = ' ';
+//        map_player2_for_player1[i] = ' ';
+//
+//    }
+//
+//
+//    struct SHIP *player2_ships[10];
+//    struct SHIP *player1_ships[10];
+//
+//    for (int i = 0; i < total_number_ships; i++) {
+//
+//        player2_ships[i] = malloc(sizeof(struct SHIP));
+//        player2_ships[i]->head = NULL;
+//        player2_ships[i]->tail = NULL;
+//
+//        player1_ships[i] = malloc(sizeof(struct SHIP));
+//        player1_ships[i]->head = NULL;
+//        player1_ships[i]->tail = NULL;
+//    }
+//
+//    player1_ships[0]->length = 5;
+//
+//    player1_ships[1]->length = 3;
+//    player1_ships[2]->length = 3;
+//
+//    player1_ships[3]->length = 2;
+//    player1_ships[4]->length = 2;
+//    player1_ships[5]->length = 2;
+//
+//    player1_ships[6]->length = 1;
+//    player1_ships[7]->length = 1;
+//    player1_ships[8]->length = 1;
+//    player1_ships[9]->length = 1;
+//
+//
+//    player2_ships[0]->length = 5;
+//
+//    player2_ships[1]->length = 3;
+//    player2_ships[2]->length = 3;
+//
+//    player2_ships[3]->length = 2;
+//    player2_ships[4]->length = 2;
+//    player2_ships[5]->length = 2;
+//
+//    player2_ships[6]->length = 1;
+//    player2_ships[7]->length = 1;
+//    player2_ships[8]->length = 1;
+//    player2_ships[9]->length = 1;
+//
+//
+//    char *recorder = malloc(sizeof(char) * 100000);
+//
+//
+//    show_menu(player1_ships, map_player1, player2_ships, map_player2);
+//
+//    //start the game
+//    while (run) {
+//
+//        // first of all we check that if we should continue or not
+//        run = ifRun(player1_ships, player2_ships);
+//
+//        if (run) {
+//
+//            // recording the game
+//            record_game(map_player1, map_player2);
+//
+//            shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
+//            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
+//            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+//
+//            shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
+//            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
+//            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+//
+//        }
+//    }
+//
+//    printf("\n\n\n\n\n\n\n\n\n\n\nGAME OVER\n\n\n");
+//    printf("                 THIS IS THE PLAY BACK\n\n\n");
+//
+//    play_back(recorder);
+//}
+
+
+void Copy_Main() {
 
     // games initial options
+    total_number_ships = count_GreenBay + count_GeorgeWashington + count_Virginia + count_Frragut + count_Independence + count_Freedom + count_Pioneer +count_VellaGulf;
+
     char *junk = malloc(sizeof(char) * 100);
 
     //--------------------- must add code for the WIDTH and HEIGHT input
@@ -1827,8 +2134,8 @@ void Main() {
     }
 
 
-    struct SHIP *player2_ships[10];
-    struct SHIP *player1_ships[10];
+    struct SHIP **player2_ships = malloc(sizeof(struct SHIP*)*total_number_ships);
+    struct SHIP **player1_ships = malloc(sizeof(struct SHIP*)*total_number_ships);
 
     for (int i = 0; i < total_number_ships; i++) {
 
@@ -1839,52 +2146,80 @@ void Main() {
         player1_ships[i] = malloc(sizeof(struct SHIP));
         player1_ships[i]->head = NULL;
         player1_ships[i]->tail = NULL;
+
     }
 
-    player1_ships[0]->length = 5;
+    for (int i = 0 ; i < total_number_ships ; i++){
 
-    player1_ships[1]->length = 3;
-    player1_ships[2]->length = 3;
+        if (i < count_GreenBay) {
+            player1_ships[i]->length = 1;
+            player2_ships[i]->length = 1;
+        }
 
-    player1_ships[3]->length = 2;
-    player1_ships[4]->length = 2;
-    player1_ships[5]->length = 2;
+        else if (i < count_Freedom + count_GreenBay ) {
+            player1_ships[i]->length = 2;
+            player2_ships[i]->length = 2;
+        }
 
-    player1_ships[6]->length = 1;
-    player1_ships[7]->length = 1;
-    player1_ships[8]->length = 1;
-    player1_ships[9]->length = 1;
+        else if (i < count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 3;
+            player2_ships[i]->length = 3;
+        }
+
+        else if (i < count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 4;
+            player2_ships[i]->length = 4;
+        }
+
+        else if (i < count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 5;
+            player2_ships[i]->length = 5;
+        }
+
+        else if (i < count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 6;
+            player2_ships[i]->length = 6;
+        }
+
+        else if (i < count_Virginia + count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 7;
+            player2_ships[i]->length = 7;
+        }
+
+        else if (i < count_GeorgeWashington + count_Virginia + count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
+            player1_ships[i]->length = 10;
+            player2_ships[i]->length = 10;
+        }
+
+    }
 
 
-    player2_ships[0]->length = 5;
+    // repositories
+    char *recorder= malloc(sizeof(char) * 100000);
 
-    player2_ships[1]->length = 3;
-    player2_ships[2]->length = 3;
-
-    player2_ships[3]->length = 2;
-    player2_ships[4]->length = 2;
-    player2_ships[5]->length = 2;
-
-    player2_ships[6]->length = 1;
-    player2_ships[7]->length = 1;
-    player2_ships[8]->length = 1;
-    player2_ships[9]->length = 1;
-
-
+    //------------------------------------------------------------------------
     show_menu(player1_ships, map_player1, player2_ships, map_player2);
 
-
-    // start the game
+    //start the game
     while (run) {
 
         // first of all we check that if we should continue or not
         run = ifRun(player1_ships, player2_ships);
 
+
         if (run) {
 
+            // recording the game
+            record_game(map_player1, map_player2);
+
             shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
-            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
+            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2,
+                 player2_ships);
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+        }
+
+        if (run){
 
             shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
             save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
@@ -1894,13 +2229,16 @@ void Main() {
 
     }
 
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nGAME OVER");
+    printf("\n\n\n\n\n\n\n\n\n\n\nGAME OVER\n\n\n");
+    printf("                 THIS IS THE PLAY BACK\n\n\n");
+
+    play_back(recorder);
 }
 
 
 int main() {
     // the reason im doing this , is getting more control on my program
-    Main();
+    Copy_Main();
 }
 
 
@@ -1922,8 +2260,6 @@ int main() {
 //                         w | w | c | c | w
 //                        ---|---|---|---|---
 //                         w | w | c | c | w
-
-// a test case : 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 1 0 0 r 1 9 9 d 1 0 9 r 1 9 0 d 2 0 4 d 2 6 6 r 2 4 4 r 5 3 9 r 3 4 2 r 3 9 3 d 0 0
 
 //               Shady1
 
