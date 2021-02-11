@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-void debug() {
+void debug(void) {
     printf("\ndebug\n");
 }
 
@@ -20,40 +20,42 @@ typedef struct {
 
 // games option
 int
-WIDTH = 10,
-HEIGHT = 10,
-total_number_ships = 10,
-turn = 1,
-largest_length = 5,
-run = true,
-separator_code = 3;
+        WIDTH = 10,
+        HEIGHT = 10,
+        total_number_ships = 10,
+        turn = 1,
+        largest_length = 5,
+        run = true,
+        separator_code = 4,
+        number_saved_games = 0,
+        isBot = false;
 
 // ships information
 int
-count_GreenBay = 4,
-count_Freedom = 3,
-count_Pioneer = 2,
-count_VellaGulf = 0,
-count_Independence = 1,
-count_Frragut = 0,
-count_Virginia = 0,
-count_GeorgeWashington = 0;
+        count_GreenBay = 4,
+        count_Freedom = 3,
+        count_Pioneer = 2,
+        count_VellaGulf = 0,
+        count_Independence = 1,
+        count_Frragut = 0,
+        count_Virginia = 0,
+        count_GeorgeWashington = 0;
 
 int
-HP_GreenBay = 1,
-HP_Freedom = 2,
-HP_Pioneer = 3,
-HP_VellaGulf = 4,
-HP_Independence = 5,
-HP_Frragut = 6,
-HP_Virginia = 7,
-HP_GeorgeWashington = 10;
+        HP_GreenBay = 1,
+        HP_Freedom = 2,
+        HP_Pioneer = 3,
+        HP_VellaGulf = 4,
+        HP_Independence = 5,
+        HP_Frragut = 6,
+        HP_Virginia = 7,
+        HP_GeorgeWashington = 10;
 
 // rules
 int missile_is_used_1 = false, missile_is_used_2 = false;
 
 // players information
-int player2_score = 0, player1_score = 0, number_users = 0, place_player1_List, place_player2_List;
+int player2_score = 0, player1_score = 0, number_users = 0, place_player1_List = -2, place_player2_List = -2;
 user List_Users[100];
 
 
@@ -126,7 +128,7 @@ void change_turn() {
 
 
 // this function find the ship according to a coordinate
-struct SHIP *getShip(int x, int y, struct SHIP *ships[]) {
+struct SHIP *getShip(int x, int y, struct SHIP **ships) {
 
     struct node *current_node;
 
@@ -144,7 +146,7 @@ struct SHIP *getShip(int x, int y, struct SHIP *ships[]) {
 
 
 // this function find the exact node according to a coordinate
-struct node *getNode(int x, int y, struct SHIP *ships[]) {
+struct node *getNode(int x, int y, struct SHIP **ships) {
 
     struct node *current_node;
 
@@ -178,58 +180,50 @@ int isExploded(struct SHIP *ship) {
 
 
 // check if the ship fits in the map_player
-int isInside(const char *map_player, struct SHIP *ship) {
+int isInside(const char *map_player, struct SHIP* ship, int _x_, int _y_, char *dir) {
 
-    int _y_ = ship->head->y;
-    int _x_ = ship->head->x;
+    if (strcmp(dir, "d") == 0) {
+        for (int i = 0; i < ship->length; i++) {
 
-    if (strcmp(ship->dir, "d") == 0) {
-        for (int i = -1; i < ship->length; i++) {
-
-            if (!((_y_ + i <= HEIGHT && _y_ + i >= -1) && (-1 <= _x_ && _x_ <= WIDTH))) {
+            if (!((_y_ + i < HEIGHT && _y_ + i >= 0) && (0 <= _x_ && _x_ < WIDTH))) {
                 printf("the ship does not fit into the map_player\n");
                 return false;
             }
         }
     }
 
+    if (strcmp(dir, "u") == 0) {
 
-    if (strcmp(ship->dir, "u") == 0) {
+        for (int i = 0; i < ship->length; i++) {
 
-        for (int i = -1; i < ship->length; i++) {
-
-            if (!((_y_ - i < HEIGHT && _y_ - i >= -1) && (-1 <= _x_ && _x_ <= WIDTH))) {
+            if (!((_y_ - i < HEIGHT && _y_ - i >= 0) && (0 <= _x_ && _x_ < WIDTH))) {
                 printf("the ship does not fit into the map_player\n");
                 return false;
             }
         }
     }
 
+    if (strcmp(dir, "r") == 0) {
 
-    if (strcmp(ship->dir, "r") == 0) {
+        for (int i = 0; i < ship->length; i++) {
 
-        for (int i = -1; i < ship->length; i++) {
-
-            if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ + i && _x_ + i <= WIDTH))) {
+            if (!((_y_ < HEIGHT && _y_ >= 0) && (0 <= _x_ + i && _x_ + i < WIDTH))) {
                 printf("the ship does not fit into the map_player\n");
                 return false;
             }
         }
     }
 
+    if (strcmp(dir, "l") == 0) {
 
-    if (strcmp(ship->dir, "l") == 0) {
+        for (int i = 0; i < ship->length; i++) {
 
-        for (int i = -1; i < ship->length; i++) {
-
-            if (!((_y_ <= HEIGHT && _y_ >= -1) && (-1 <= _x_ - i && _x_ - i <= WIDTH))) {
+            if (!((_y_ < HEIGHT && _y_ >= 0) && (0 <= _x_ - i && _x_ - i < WIDTH))) {
                 printf("the ship does not fit into the map_player\n");
                 return false;
             }
         }
     }
-
-
     return true;
 }
 
@@ -243,18 +237,15 @@ int isIn(int x, int y) {
 
 
 // check if is there any collision between ships space
-int ifCollision(const char *map_player, struct SHIP *ship) {
+int ifCollision(const char *map_player, struct SHIP *ship, int _x_, int _y_, char *dir) {
 
-    int _y_ = ship->head->y;
-    int _x_ = ship->head->x;
-
-    if (strcmp(ship->dir, "d") == 0) {
+    if (strcmp(dir, "d") == 0) {
         for (int i = -1; i <= ship->length; i++) {
 
             for (int j = -1; j < 2; j++) {
 
                 if (map_player[(_y_ + i) * WIDTH + _x_ + j] == 'f' &&
-                    ((_y_ + i < HEIGHT && _y_ + i > 0) && (_x_ + j < WIDTH && _x_ + j > 0))) {
+                    ((_y_ + i < HEIGHT && _y_ + i >= 0) && (_x_ + j < WIDTH && _x_ + j >= 0))) {
                     printf("there is a collision between ships\n");
                     return true;
                 }
@@ -263,14 +254,14 @@ int ifCollision(const char *map_player, struct SHIP *ship) {
     }
 
 
-    if (strcmp(ship->dir, "u") == 0) {
+    if (strcmp(dir, "u") == 0) {
 
         for (int i = -1; i <= ship->length; i++) {
 
             for (int j = -1; j < 2; j++) {
 
                 if (map_player[(_y_ - i) * WIDTH + _x_ + j] == 'f' &&
-                    ((_y_ - i < HEIGHT && _y_ - i > 0) && (_x_ + j < WIDTH && _x_ + j > 0))) {
+                    ((_y_ - i < HEIGHT && _y_ - i >= -1) && (_x_ + j < WIDTH && _x_ + j >= 0))) {
                     printf("there is a collision between ships\n");
                     return true;
                 }
@@ -279,14 +270,14 @@ int ifCollision(const char *map_player, struct SHIP *ship) {
     }
 
 
-    if (strcmp(ship->dir, "r") == 0) {
+    if (strcmp(dir, "r") == 0) {
 
         for (int i = -1; i <= ship->length; i++) {
 
             for (int j = -1; j < 2; j++) {
 
                 if (map_player[(_y_ + j) * WIDTH + _x_ + i] == 'f' &&
-                    ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ + i < WIDTH && _x_ + i > 0))) {
+                    ((_y_ + j < HEIGHT && _y_ + j >= 0) && (_x_ + i < WIDTH && _x_ + i >= 0))) {
                     printf("there is a collision between ships\n");
                     return true;
                 }
@@ -295,14 +286,14 @@ int ifCollision(const char *map_player, struct SHIP *ship) {
     }
 
 
-    if (strcmp(ship->dir, "l") == 0) {
+    if (strcmp(dir, "l") == 0) {
 
         for (int i = -1; i <= ship->length; i++) {
 
             for (int j = -1; j < 2; j++) {
 
                 if (map_player[(_y_ + j) * WIDTH + _x_ - i] == 'f' &&
-                    ((_y_ + j < HEIGHT && _y_ + j > 0) && (_x_ - i < WIDTH && _x_ - i > 0))) {
+                    ((_y_ + j < HEIGHT && _y_ + j >= 0) && (_x_ - i < WIDTH && _x_ - i >= 0))) {
                     printf("there is a collision between ships\n");
                     return true;
                 }
@@ -310,16 +301,15 @@ int ifCollision(const char *map_player, struct SHIP *ship) {
         }
     }
     return false;
-
 }
 
 
 // this function checks if the ship fits in its place in 2 condition:
 //                                                                   first if the ship is completely in the map_player.
 //                                                                   second if the ship does not have any collision with other ships.
-int isFit(const char *map_player, struct SHIP *ship) {
+int isFit(const char *map_player, struct SHIP *ship, int _x_, int _y_, char *dir) {
 
-    if (isInside(map_player, ship) && !(ifCollision(map_player, ship))) {
+    if (isInside(map_player, ship, _x_, _y_, dir) && !(ifCollision(map_player, ship, _x_, _y_, dir))) {
 
         return true;
     } else {
@@ -332,37 +322,38 @@ int isFit(const char *map_player, struct SHIP *ship) {
 // this function put the ship in its place
 int make_ship(struct SHIP *ship, char *dir, char *map_player, int _x_, int _y_) {
 
-    append(_x_, _y_, ship, 'f');
-    ship->dir = strdup(dir);
-
     struct node *current_node;
     current_node = ship->head;
 
     // u : up
     if (strcmp(dir, "u") == 0) {
-
-        if (isFit(map_player, ship) == 0) {      // this check that if the ship fits in the place or not
+        if (isFit(map_player, ship, _x_, _y_, dir) == 0) {      // this check that if the ship fits in the place or not
+            printf("invalid place for putting your ship\n");
             return 0;
         }
 
+        ship->dir = strdup(dir);
+        append(_x_, _y_, ship, 'f');
         map_player[_x_ + WIDTH * _y_] = 'f';
-        for (int i = 1; i < ship->length; i++) {
 
+        for (int i = 1; i < ship->length; i++) {
             append(_x_, _y_ - i, ship, 'f');
-            map_player[_x_ + WIDTH * (_y_ - i)];
+            map_player[_x_ + WIDTH * (_y_ - i)] = 'f';
         }
     }
 
     // d : down
     if (strcmp(dir, "d") == 0) {
-
-        if (isFit(map_player, ship) == 0) {      // this check that if the ship fits in the map_player or not
+        if (isFit(map_player, ship, _x_, _y_, dir) == 0) {      // this check that if the ship fits in the map_player or not
+            printf("invalid place for putting your ship\n");
             return 0;
         }
 
+        ship->dir = strdup(dir);
+        append(_x_, _y_, ship, 'f');
         map_player[_x_ + WIDTH * _y_] = 'f';
-        for (int i = 1; i < ship->length; i++) {
 
+        for (int i = 1; i < ship->length; i++) {
             append(_x_, _y_ + i, ship, 'f');
             map_player[_x_ + WIDTH * (_y_ + i)] = 'f';
         }
@@ -370,14 +361,16 @@ int make_ship(struct SHIP *ship, char *dir, char *map_player, int _x_, int _y_) 
 
     // r : right
     if (strcmp(dir, "r") == 0) {
-
-        if (isFit(map_player, ship) == 0) {      // this check that if the ship fits in the map_player or not
+        if (isFit(map_player, ship, _x_, _y_, dir) == 0) {      // this check that if the ship fits in the map_player or not
+            printf("invalid place for putting your ship\n");
             return 0;
         }
 
+        ship->dir = strdup(dir);
+        append(_x_, _y_, ship, 'f');
         map_player[_x_ + WIDTH * _y_] = 'f';
-        for (int i = 1; i < ship->length; i++) {
 
+        for (int i = 1; i < ship->length; i++) {
             append(_x_ + i, _y_, ship, 'f');
             map_player[_x_ + i + WIDTH * _y_] = 'f';
         }
@@ -385,15 +378,16 @@ int make_ship(struct SHIP *ship, char *dir, char *map_player, int _x_, int _y_) 
 
     // l : left
     if (strcmp(dir, "l") == 0) {
-
-        if (isFit(map_player, ship) == 0) {      // this check that if the ship fits in the map_player or not
+        if (isFit(map_player, ship, _x_, _y_, dir) == 0) {      // this check that if the ship fits in the map_player or not
             printf("invalid place for putting your ship\n");
             return 0;
         }
 
+        ship->dir = strdup(dir);
+        append(_x_, _y_, ship, 'f');
         map_player[_x_ + WIDTH * _y_] = 'f';
-        for (int i = 1; i < ship->length; i++) {
 
+        for (int i = 1; i < ship->length; i++) {
             append(_x_ - i, _y_, ship, 'f');
             map_player[_x_ - i + WIDTH * _y_] = 'f';
         }
@@ -403,7 +397,7 @@ int make_ship(struct SHIP *ship, char *dir, char *map_player, int _x_, int _y_) 
 
 
 // this function locate the ships into the map_player manually
-void map_player_ships_manually(struct SHIP *ships[], char *map_player) {
+void map_player_ships_manually(struct SHIP **ships, char *map_player) {
     // the code below is for players mapping term
 
     int length_1_counter = 0;
@@ -419,9 +413,7 @@ void map_player_ships_manually(struct SHIP *ships[], char *map_player) {
     while (length_1_counter + length_2_counter + length_3_counter + length_5_counter < total_number_ships) {
 
         //----------------------------------------------------- this part is for getting inputs from user (player)
-
         // scanning a valid length
-
         do {
             printf("select the size of the ship\n");
             scanf("%d", &length);
@@ -513,7 +505,7 @@ void map_player_ships_manually(struct SHIP *ships[], char *map_player) {
 
 
 // this function locate the ships into the map_player automatically
-void map_player_ships_automatically(struct SHIP *ships[], char *map_player) {
+void map_player_ships_automatically(struct SHIP **ships, char *map_player) {
     // the code below is for mapping automatically
 
     srand(time(0));
@@ -523,80 +515,71 @@ void map_player_ships_automatically(struct SHIP *ships[], char *map_player) {
     int length_3_counter = 0;
     int length_5_counter = 0;
 
+    int length;  // length is for the length of the boat that the player select
+    int _x_;     // x of head of the ship
+    int _y_;     // y of head of the ship
+    char *dir = malloc(sizeof(char) * 2);
+    int dir_int; // the direction that the ship has, must choose between 1(up), 2(down), 3(right), 4(left)
+    int i = 0;
+
     while (length_1_counter + length_2_counter + length_3_counter + length_5_counter < total_number_ships) {
 
-        int length = rand() % 4;              // length is for the length of the boat that the player select
-        int _x_ = rand() % 10;                  // x of head of the ship
-        int _y_ = rand() % 10;                  // y of head of the ship
-        char *dir = malloc(sizeof(char) * 2);
-        int dir_int = rand() % 4 +
-                      1;           // the direction that the ship has, must choose between 1(up), 2(down), 3(right), 4(left)
+        _x_ = rand() % WIDTH;
+        _y_ = rand() % HEIGHT;
+        dir_int = rand() % 4 + 1;
 
-        if (dir_int == 1) dir = "u";
-        else if (dir_int == 2) dir = "d";
-        else if (dir_int == 3) dir = "r";
-        else if (dir_int == 4) dir = "l";
+        if (i % 10 < 4){
+            length = 1;
+        }
+        else if (i % 10 >= 4 && i % 10 < 7){
+            length = 2;
+        }
+        else if (i % 10 >= 7 && i % 10 < 9){
+            length = 3;
+        }
+        else if (i % 10 == 9){
+            length = 5;
+        }
+
+        if (dir_int == 1) strcpy(dir, "u");
+        else if (dir_int == 2) strcpy(dir, "d");
+        else if (dir_int == 3) strcpy(dir, "r");
+        else if (dir_int == 4) strcpy(dir, "l");
 
         //----------------------------------------------------- this part is placing ships in the map_player
-
         //----------------------length 1
-
         if (length == 1 && length_1_counter < 4) {
 
             ships[6 + length_1_counter]->dir = strdup(dir);
-            if (make_ship(ships[6 + length_1_counter], dir, map_player, _x_, _y_) == 0) continue;
-
+            if (make_ship(ships[6 + length_1_counter], dir, map_player, _x_, _y_) == 0) {continue;}
             length_1_counter++;
-
-        } else if (length == 1 && length_1_counter == 4) {
-            printf("you have used all of your ships with length of 1");
-            continue;
+            i++;
         }
-
         //----------------------length 2
-
-        if (length == 2 && length_2_counter < 3) {
+        else if (length == 2 && length_2_counter < 3) {
 
             ships[3 + length_2_counter]->dir = strdup(dir);
-            if (make_ship(ships[3 + length_2_counter], dir, map_player, _x_, _y_) == 0) continue;
-
+            if (make_ship(ships[3 + length_2_counter], dir, map_player, _x_, _y_) == 0) {continue;}
             length_2_counter++;
-
-        } else if (length == 2 && length_2_counter == 3) {
-            printf("you have used all of your ships with length of 2");
-            continue;
+            i++;
         }
-
         //----------------------length 3
-
-        if (length == 3 && length_3_counter < 2) {
+        else if (length == 3 && length_3_counter < 2) {
 
             ships[1 + length_3_counter]->dir = strdup(dir);
-            if (make_ship(ships[1 + length_3_counter], dir, map_player, _x_, _y_) == 0) continue;
-
+            if (make_ship(ships[1 + length_3_counter], dir, map_player, _x_, _y_) == 0) {continue;}
             length_3_counter++;
-
-        } else if (length == 3 && length_3_counter == 2) {
-            printf("you have used all of your ships with length of 3");
-            continue;
+            i++;
         }
-
         //----------------------length 5
-
-        if (length == 5 && length_5_counter < 1) {
+        else if (length == 5 && length_5_counter < 1) {
 
             ships[0]->dir = strdup(dir);
-            if (make_ship(ships[0], dir, map_player, _x_, _y_) == 0) continue;
-
+            if (make_ship(ships[0], dir, map_player, _x_, _y_) == 0) {continue;}
             length_5_counter++;
-
-        } else if (length == 5 && length_5_counter == 1) {
-            printf("you have used all of your ships with length of 5");
-            continue;
+            i++;
         }
-
         //--------------------------------------------------------------------------------------------------------
-
     }
 }
 
@@ -626,36 +609,53 @@ void sort_users (){
 }
 
 
-// this function saves the information of the users at the end of the game
-void save(char* map_player1, char* map_player2, struct SHIP* player1_ships[], char* map_player2_for_player1, char* map_player1_for_player2, struct SHIP* player2_ships[]){
+// this function saves the information of the users during the game
+void save_users_info(void) {
 
-    // save users score and users
-    List_Users[place_player1_List].score = player1_score;
-    List_Users[place_player2_List].score = player2_score;
+    if (isBot == false) {
+        // save_users_info users score and users
+        List_Users[place_player1_List].score += player1_score;
+        List_Users[place_player2_List].score += player2_score;
 
-    struct SHIP* current_ship = malloc(sizeof(struct SHIP));
-    struct node* current_node = malloc(sizeof(struct node));
+        struct SHIP *current_ship = malloc(sizeof(struct SHIP));
+        struct node *current_node = malloc(sizeof(struct node));
 
-    sort_users();
+        sort_users();
+        FILE *file_users = fopen("users.txt", "w");
 
-    FILE *file_users = fopen("users.txt", "w");
+        for (int i = 0; i < number_users - 1; i++) {
+            fprintf(file_users, "%s ", List_Users[i].name);
+            fprintf(file_users, "%d\n", List_Users[i].score);
+        }
+        fprintf(file_users, "%s ", List_Users[number_users - 1].name);
+        fprintf(file_users, "%d", List_Users[number_users - 1].score);
 
-    for (int i = 0 ; i < number_users ; i++){
-
-        fprintf(file_users, "%s ", List_Users[i].name);
-        fprintf(file_users, "%d\n", List_Users[i].score);
-
-        printf("%s ", List_Users[i].name);
-        printf("%d\n", List_Users[i].score);
-
+        fclose(file_users);
     }
+    else if (isBot == true){
+        // save_users_info users score and users
+        List_Users[place_player1_List].score += player1_score;
 
-    fclose(file_users);
+        struct SHIP *current_ship = malloc(sizeof(struct SHIP));
+        struct node *current_node = malloc(sizeof(struct node));
+
+        sort_users();
+        FILE *file_users = fopen("users.txt", "w");
+
+        for (int i = 0; i < number_users - 1; i++) {
+            fprintf(file_users, "%s ", List_Users[i].name);
+            fprintf(file_users, "%d\n", List_Users[i].score);
+        }
+        fprintf(file_users, "%s ", List_Users[number_users - 1].name);
+        fprintf(file_users, "%d", List_Users[number_users - 1].score);
+
+        fclose(file_users);
+    }
 
 }
 
 
-// this function save the entire game
+// this function save_users_info the entire game
 void record_game(char* map_player1 , char* map_player2){
 
     FILE* RECORD = fopen("RECORD.txt", "a");
@@ -665,15 +665,12 @@ void record_game(char* map_player1 , char* map_player2){
     for (int y = 0; y < HEIGHT; y++) {
 
         for (int x = 0; x < WIDTH; x++) {
-
             if (x == WIDTH - 1) fprintf(RECORD, " %c \n", map_player1[x + WIDTH * y]);
             else fprintf(RECORD, " %c |", map_player1[x + WIDTH * y]);
-
         }
 
         if (y < HEIGHT - 1) {
             for (int x = 0; x < WIDTH; x++) {
-
                 if (x == WIDTH - 1) fprintf(RECORD, "---\n");
                 else fprintf(RECORD, "---|");
             }
@@ -729,12 +726,10 @@ void play_back(char* recorder){
     FILE* PLAY_BACK = fopen("RECORD.txt", "r");
 
     while (!(feof(PLAY_BACK))){
-
         fgets(recorder, 100000, PLAY_BACK);
         printf("%s", recorder);
 
     }
-
     fclose(PLAY_BACK);
 }
 
@@ -747,7 +742,7 @@ void draw_board(char *map) {
     char *map_name[] = {"Shady1", "Shady2", "Shady3", "Line", "Money", "Star"};
 
     // loop for drawing the map
-    if (separator_code == 3) {
+    if (separator_code == 4) {
         for (int y = 0; y < HEIGHT; y++) {
 
             for (int x = 0; x < WIDTH; x++) {
@@ -795,6 +790,157 @@ void draw_board(char *map) {
 }
 
 
+// save_users_info game information ( ships and maps)
+void save(char *map_player1, char *map_player2, struct SHIP **player1_ships, char *map_player2_for_player1, char *map_player1_for_player2, struct SHIP **player2_ships)
+{
+
+    FILE *saved_ships = fopen("saved_ships.txt", "ab");
+    FILE *saved_maps = fopen("saved_maps.txt", "ab");
+    struct node *current_node = malloc(sizeof(struct node));
+
+    // saving the game info
+    // maps
+    fwrite(map_player1, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fwrite(map_player2_for_player1, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fwrite(map_player2, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fwrite(map_player1_for_player2, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    // ships
+    for (int i = 0; i < total_number_ships; i++)
+    {
+        // player1 ships
+        fwrite(player1_ships[i]->dir, sizeof(char), 2, saved_ships);
+        fwrite(&player1_ships[i]->length, sizeof(int), 1, saved_ships);
+        current_node = player1_ships[i]->head;
+        for (int j = 0; j < player1_ships[i]->length; j++)
+        {
+            fwrite(&current_node->x, sizeof(int), 1, saved_ships);
+            fwrite(&current_node->y, sizeof(int), 1, saved_ships);
+            fwrite(&current_node->status, sizeof(char), 1, saved_ships);
+            current_node = current_node->next;
+        }
+        // player2 ships
+        fwrite(player2_ships[i]->dir, sizeof(char), 2, saved_ships);
+        fwrite(&player2_ships[i]->length, sizeof(int), 1, saved_ships);
+        current_node = player2_ships[i]->head;
+
+        for (int j = 0; j < player2_ships[i]->length; j++)
+        {
+            fwrite(&current_node->x, sizeof(int), 1, saved_ships);
+            fwrite(&current_node->y, sizeof(int), 1, saved_ships);
+            fwrite(&current_node->status, sizeof(char), 1, saved_ships);
+            current_node = current_node->next;
+        }
+    }
+    fclose(saved_ships);
+    fclose(saved_maps);
+}
+
+
+// this function load the saved games
+void load(char *map_player1, char *map_player2, struct SHIP **player1_ships, char *map_player2_for_player1, char *map_player1_for_player2, struct SHIP **player2_ships)
+{
+
+    int choice = 1;
+    int i = 0;
+    struct node *current_node;
+    int isLast = 2;
+
+    // ask if should load last game
+    printf("1. Load Last game\n"
+           "2. show all saved games\n");
+    do
+    {
+        scanf("%d", &choice);
+    } while (choice != 1 && choice != 2);
+    // initializing
+
+    FILE *saved_maps = fopen("saved_maps.txt", "rb");
+    FILE *saved_ships = fopen("saved_ships.txt", "rb");
+    char *map_player2_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+    char *map_player1_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+    char *map_player2_for_player1_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+    char *map_player1_for_player2_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+
+    do
+    {
+        i++;
+        // reading the maps from the file
+        fread(map_player1_copy, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+        fread(map_player2_for_player1_copy, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+        fread(map_player2_copy, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+        fread(map_player1_for_player2_copy, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+
+        // drawing the maps
+        printf("%d.              PLAYER 1\n", i);
+        draw_board(map_player1_copy);
+        printf("%d.              PLAYER 2\n", i);
+        draw_board(map_player2_copy);
+
+        // reallocating the maps
+        map_player2_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+        map_player1_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+        map_player2_for_player1_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+        map_player1_for_player2_copy = malloc(sizeof(char) * WIDTH * HEIGHT + 1);
+    } while (i < number_saved_games && isLast == 2);
+    ///--------------------------------------------------------------------------------
+    if (choice == 2)
+    {
+        printf("\nchoose your game\n");
+        scanf("%d", &choice);
+    }
+    else if (choice == 1)
+    {
+        choice = number_saved_games;
+    }
+
+    fseek(saved_ships, (choice - 1) * (41 * sizeof(char) + 52 * sizeof(int)), SEEK_SET);
+    fseek(saved_maps, (choice - 1) * 4 * sizeof(char) * WIDTH * HEIGHT + 1, SEEK_SET);
+
+    //////////////////////////////////////
+    int x;
+    int y;
+    char status;
+
+    // ships
+    for (int k = 0; k < total_number_ships; k++)
+    {
+        // player 1 ships
+        fread(player1_ships[k]->dir, sizeof(char), 2, saved_ships);
+        fread(&player1_ships[k]->length, sizeof(int), 1, saved_ships);
+        printf("%s %d", player1_ships[k]->dir, player1_ships[k]->length);
+        current_node = player1_ships[k]->head;
+
+        for (int j = 0; j < player1_ships[i]->length; j++)
+        {
+            fread(&x, sizeof(int), 1, saved_ships);
+            fread(&y, sizeof(int), 1, saved_ships);
+            fread(&status, sizeof(char), 1, saved_ships);
+            append(x, y, player1_ships[k], status);
+        }
+        // player 2 ships
+        fread(player2_ships[k]->dir, sizeof(char), 2, saved_ships);
+        fread(&player2_ships[k]->length, sizeof(int), 1, saved_ships);
+        current_node = player1_ships[k]->head;
+
+        for (int j = 0; j < player1_ships[i]->length; j++)
+        {
+            fread(&x, sizeof(int), 1, saved_ships);
+            fread(&y, sizeof(int), 1, saved_ships);
+            fread(&status, sizeof(char), 1, saved_ships);
+            append(x, y, player2_ships[k], status);
+        }
+    }
+    // maps
+    fread(map_player1, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fread(map_player2_for_player1, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fread(map_player2, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+    fread(map_player1_for_player2, sizeof(char), WIDTH * HEIGHT + 1, saved_maps);
+
+    fclose(saved_maps);
+    fclose(saved_ships);
+}
+
+
 // this function adjust score of the players
 void add_score(int length) {
 
@@ -810,8 +956,8 @@ void add_score(int length) {
 }
 
 
-// this function is used for the bot to shoot its bomb
-void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP *ships[]) {
+// this function is used for the isBot to shoot its bomb
+void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP **ships) {
 
     struct node *a_node = malloc(sizeof(struct node));
 
@@ -971,26 +1117,18 @@ void shoot_automatically(char *map_for_shooter, char *map_of_shooter, char *map_
             map_enemy[x + WIDTH * y] = 'e';
             map_for_shooter[x + WIDTH * y] = 'e';
 
-            if (turn == 1){
-
-                player1_score += 1;
-
-            }
-
-            else if (turn == 2){
-
-                player2_score += 1;
-
-            }
+            if (turn == 1) player1_score += 1;
+            else if (turn == 2) player2_score += 1;
 
         }
     }
+    change_turn();
 
 }
 
 
 // this function is used for player to shoot the missiles
-void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP *ships[], int x, int y) {
+void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP **ships, int x, int y) {
 
     struct node *a_node;
 
@@ -1158,7 +1296,7 @@ void shoot(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct 
 
 
 // this function is used for player to shoot its bomb
-void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP *ships[]) {
+void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy, struct SHIP **ships) {
 
     // showing the board of enemy
     printf("                 ENEMY\n");
@@ -1196,16 +1334,15 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
         scanf("%s", ans);
     }
 
-    // scanning the coordination of the place that the player wants to hit
+    // scanning the coordination of the place that the player wants to shoot to
     do {
-
         printf("choose a block that is not revealed yet!\n");
-        printf("enter x :");
+        printf("enter x between %d and 0:", WIDTH - 1);
         scanf("%d", &x);
-        printf("enter y :");
+        printf("enter y between %d and 0:\n", HEIGHT - 1);
         scanf("%d", &y);
 
-    } while (map_for_shooter[x + WIDTH * y] != ' ' && strcmpi(ans, "n") == 0);
+    } while ((map_for_shooter[x + WIDTH * y] != ' ' || x < 0 || y < 0 || x > WIDTH - 1 || y > HEIGHT - 1) && strcmpi(ans, "n") == 0 );
 
     // doing the shooting process
     if (strcmp(ans, "n") == 0 || strcmp(ans, "N") == 0) {
@@ -1379,18 +1516,8 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
                 map_enemy[x + WIDTH * y] = 'e';
                 map_for_shooter[x + WIDTH * y] = 'e';
 
-                if (turn == 1){
-
-                    player1_score++;
-
-                }
-
-                else if (turn == 2){
-
-                    player2_score++;
-
-                }
-
+                if (turn == 1)player1_score++;
+                else if (turn == 2)player2_score++;
             }
         }
     }
@@ -1418,39 +1545,37 @@ void shoot_manually(char *map_for_shooter, char *map_of_shooter, char *map_enemy
 
         // paying the price
         if (turn == 1) {
-
             player1_score -= 100;
             missile_is_used_1 = true;
-
         }
         else if (turn == 2) {
-
             player2_score -= 100;
             missile_is_used_2 = true;
-
         }
-
     }
-
     change_turn();
 }
 
 
 // this function check if the program should run again by checking if ech of players have lost all of his/her ships.
-int ifRun(struct SHIP *player1_ships[], struct SHIP *player2_ships[]) {
+int ifRun(struct SHIP **player1_ships, struct SHIP **player2_ships) {
 
-    for (int i = 0; i < total_number_ships; i++) {
+    for (int i = 0 ; i < total_number_ships ; i++) {
 
         if (isExploded(player1_ships[i]) == false) break;
         if (i == total_number_ships - 1) return false;
+
     }
 
-    for (int i = 0; i < total_number_ships; i++) {
+    for (int i = 0 ; i < total_number_ships ; i++) {
 
         if (isExploded(player2_ships[i]) == false) break;
         if (i == total_number_ships - 1) return false;
+
     }
+
     return true;
+
 }
 
 
@@ -1459,30 +1584,21 @@ void show_themes(){
 
     char separator[] = {'a' + 79, 'a' + 80, 'a' + 81, '|', '$', '*'};
     char *map_name[] = {"Shady1", "Shady2", "Shady3", "Line", "Money", "Star"};
-
     int x = 0 , y = 0 ;
 
     for( int i = 0 ; i < 6 ; i++) {
-
         printf("                 %d.%s\n\n", i + 1, map_name[i]);
-
-
         while (y < 2 * HEIGHT - 1) {
-
             if (y % 2 != 0) {
-
                 if (x < WIDTH - 1) {
-
                     if (i == 3) {
                         printf("---%c", separator[i]);
                         x++;
                     }
-
                     else {
                         printf("%c%c%c%c", separator[i], separator[i], separator[i], separator[i]);
                         x++;
                     }
-
                 } else {
                     if (i == 3) {
                         printf("---\n");
@@ -1490,7 +1606,6 @@ void show_themes(){
                         y++;
                         continue;
                     }
-
                     else {
                         printf("%c%c%c\n", separator[i],separator[i],separator[i]);
                         x = 0;
@@ -1498,7 +1613,6 @@ void show_themes(){
                         continue;
                     }
                 }
-
             } else {
                 if (x < WIDTH - 1) {
                     printf(" w %c", separator[i]);
@@ -1511,18 +1625,15 @@ void show_themes(){
 
             }
         }
-
         x = 0 ;
         y = 0 ;
-
         printf("\n\n");
     }
-
 }
 
 
 // this function show the main menu of the game.
-void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *player2_ships[], char *map_player2) {
+void show_menu(struct SHIP **player1_ships, char *map_player1, struct SHIP **player2_ships, char *map_player2, char *map_player1_for_player2, char *map_player2_for_player1) {
 
     // initializing
     int choice;
@@ -1541,601 +1652,668 @@ void show_menu(struct SHIP *player1_ships[], char *map_player1, struct SHIP *pla
         fscanf(users_file, "%d", &List_Users[k].score);
         k++;
     }
-
     fclose(users_file);
     number_users = k;
     k = 0;
 
-    // finished initializing
+    while (choice != 6) {
 
-    // showing the main menu
-    printf("\n"
-           "1. Play with a Friend\n"
-           "2. Play with bot\n"
-           "3. Load last game\n"
-           "4. Settings\n"
-           "5. Score Board\n"
-           "6. Exit\n");
+        // showing the main menu
+        printf("\n"
+               "1. Play with a Friend\n"
+               "2. Play with Bot\n"
+               "3. load game\n"
+               "4. Settings\n"
+               "5. Score Board\n"
+               "6. Exit\n");
+        do {
+            scanf("%d", &choice);
+        }while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
 
-    do {
 
-        scanf("%d", &choice);
+        //--------------------------------------------------------
+        //--------------------------------------------------------
 
-    }while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
+        if (choice == 1) {
 
-    if (choice == 1) {
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // first player choose his user
+            printf("\nFirst Player\n");
 
-        //-----------------------------------------------------------------------
-        // first player choose his user
-        printf("\nFirst Player\n");
+            printf("choose user\n");
 
-        printf("choose user\n");
+            printf("            1. choose from available users\n"
+                   "            2. new user\n");
 
-        printf("            1. choose from available users\n"
-               "            2. new user\n");
+            // choosing the user info
+            scanf("%d", &choice);
 
-        // choosing the user info
-        scanf("%d", &choice);
+            // new user
+            if (choice == 2) {
 
-        // new user
-        if (choice == 2) {
+                printf("username:");
+                scanf("%s", new_user1);
+                int i = 0;
 
-            printf("username:");
+                // check if the user is already in use or not
+                while (i < number_users) {
 
-            scanf("%s",new_user1);
-            int i = 0;
+                    if (strcmpi(new_user1, List_Users[i].name) == 0) {
+                        printf("%s is already in use\n", new_user1);
+                        printf("username: ");
+                        scanf("%s", new_user1);
 
-            // check if the user is already in use or not
-            while (i < number_users) {
-
-                if (strcmpi(new_user1, List_Users[i].name) == 0) {
-
-                    printf("%s is already in use\n", new_user1);
-                    printf("username: ");
-                    scanf("%s", new_user1);
-
-                    i = 0;
+                        i = 0;
+                    }
+                    i++;
                 }
-                i++;
+                // affecting the new users to games information
+                number_users++;
+                strcpy(List_Users[number_users - 1].name, new_user1);
+                List_Users[number_users - 1].score = 0;
+
+                place_player1_List = number_users - 1;
             }
 
-            // affecting the new users to games information
-            number_users++;
-            strcpy(List_Users[number_users - 1].name, new_user1);
-            List_Users[number_users - 1].score = 0;
+                // choose from available users
+            else if (choice == 1) {
+                printf("           Users List\n");
 
-            place_player1_List = number_users - 1;
+                for (int j = 0; j < number_users; j++) {
+                    printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                }
 
-        }
+                printf("enter your user number:");
+                do {
+                    scanf("%d", &choice);
+                } while (choice > number_users || choice < 1);
+                place_player1_List = choice - 1;
 
-            // choose from available users
-        else if (choice == 1) {
-
-            users_file = fopen("users.txt", "r");
-
-            printf("           Users List\n");
-
-            for (int j = 0; j < number_users; j++) {
-
-                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
             }
+            //--------------------------------------------------------
+            //--------------------------------------------------------
+            // first player put his ships
+            // showing the menu
+
+            printf("put ships\n");
+            printf("           1.Auto\n"
+                   "           2.Manual\n");
 
             do {
 
                 scanf("%d", &choice);
 
-            }while (choice > number_users || choice < 1);
-
-            place_player1_List = choice - 1;
-
-        }
-
-        // first player put his ships
-
-        printf("put ships\n");
-        printf("           1.Auto\n"
-               "           2.Manual\n");
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 1 && choice != 2);
-
-        if (choice == 1) {
-
-            map_player_ships_automatically(player1_ships, map_player1);
-
-        } else if (choice == 2) {
-
-            map_player_ships_manually(player1_ships, map_player1);
-
-        }
-        //-----------------------------------------------------------------------
-
-
-        //-----------------------------------------------------------------------
-        // second player choose his user
-        printf("\nSecond Player\n");
-
-        printf("choose user\n");
-
-        printf("            1. choose from available users\n"
-               "            2. new user\n");
-
-        // choosing the user information
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 1 && choice != 2);
-
-        // new user
-        if (choice == 2) {
-
-            printf("username:");
-
-            scanf("%s",new_user2);
-            int i = 0;
-
-            // check if the user is already in use or not
-            while (i < number_users) {
-
-                if (strcmpi(new_user2, List_Users[i].name) == 0) {
-
-                    printf("%s is already in use\n", new_user2);
-                    printf("username: ");
-                    scanf("%s", new_user2);
-
-
-                    i = 0;
-                }
-                i++;
-            }
-
-            // affecting the new users to the games information
-            number_users++;
-            strcpy(List_Users[number_users - 1].name, new_user2);
-            List_Users[number_users - 1].score = 0;
-
-            place_player2_List = number_users - 1;
-
-        }
-
-            // choose from available users
-        else if (choice == 1) {
-
-            users_file = fopen("users.txt", "r");
-
-            printf("           Users List\n");
-
-            for (int j = 0; j < number_users; j++) {
-
-                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
-            }
-
-            scanf("%d", &choice);
-            place_player2_List = choice - 1;
-
-        }
-
-        // second player put his ships
-
-        printf("put ships\n");
-        printf("           1.Auto\n"
-               "           2.Manual\n");
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 1 && choice != 2);
-
-        if (choice == 1) {
-            map_player_ships_automatically(player2_ships, map_player2);
-
-        } else if (choice == 2) {
-
-            map_player_ships_manually(player2_ships, map_player2);
-        }
-        //-----------------------------------------------------------------------
-        // showing the menu again
-        printf("\n"
-               "4. Settings\n"
-               "5. Score Board\n"
-               "6. Exit\n");
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 4 && choice != 5 && choice != 6);
-    }
-
-    // playing with bot
-    else if (choice == 2){
-
-        //-----------------------------------------------------------------------
-        // first player choose his user
-        printf("\nFirst Player\n");
-
-        printf("choose user\n");
-
-        printf("            1. choose from available users\n"
-               "            2. new user\n");
-
-        // choosing the user info
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 3 && choice != 4 && choice != 5 && choice != 6);
-
-        // new user
-        if (choice == 2) {
-
-            printf("username:");
-            scanf("%s", new_user2);
-            int i = 0;
-            // check if the user is already in use or not
-            while (i < number_users) {
-
-                if (strcmpi(new_user2, List_Users[i].name) == 0) {
-
-                    printf("%s is already in use\n", new_user2);
-                    printf("username: ");
-                    scanf("%s", new_user2);
-
-                    i = 0;
-                }
-                i++;
-            }
-
-            // affecting the new users to games information
-            number_users++;
-            strcpy(List_Users[number_users - 1].name, new_user2);
-            List_Users[number_users -1].score = 0;
-
-            place_player1_List = number_users - 1;
-
-        }
-
-            // choose from available users
-        else if (choice == 1) {
-
-            users_file = fopen("users.txt", "r");
-
-            printf("           Users List\n");
-
-            for (int j = 0; j < number_users; j++) {
-
-                printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
-            }
-
-            scanf("%d", &choice);
-            place_player1_List = choice - 1;
-
-        }
-
-        // first player put his ships
-
-        printf("put ships\n");
-        printf("           1.Auto\n"
-               "           2.Manual\n");
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 1 && choice != 2);
-
-        if (choice == 1) {
-            map_player_ships_automatically(player1_ships, map_player1);
-
-        } else if (choice == 2) {
-
-            map_player_ships_manually(player1_ships, map_player1);
-        }
-        //-----------------------------------------------------------------------
-
-        // put the bots ships
-        map_player_ships_automatically(player2_ships, map_player2);
-
-        //-----------------------------------------------------------------------
-        // showing the menu again
-        printf("\n"
-               "4. Settings\n"
-               "5. Score Board\n"
-               "6. Exit\n");
-
-        do {
-
-            scanf("%d", &choice);
-
-        }while (choice != 4 && choice != 5 && choice != 6);
-
-    }
-
-    if (choice == 4){
-
-        printf("\n"
-               "1.Ships\n"
-               "2.Map Size\n"
-               "3.Theme\n"
-               "4.return\n");
-
-        do{
-            scanf("%d", &choice);
-        }while(choice < 1 || choice > 3);
-
-        while (choice != 4){
+            } while (choice != 1 && choice != 2);
 
             if (choice == 1) {
-                printf("\nchoose the number of each ship");
 
-                printf("\nGreenBay(HP = 1):");
-                scanf("%d", &count_GreenBay);
+                map_player_ships_automatically(player1_ships, map_player1);
 
-                printf("\nFreedom(HP = 2):");
-                scanf("%d", &count_Freedom);
+            } else if (choice == 2) {
 
-                printf("\nPioneer(HP = 3):");
-                scanf("%d", &count_Pioneer);
+                map_player_ships_manually(player1_ships, map_player1);
 
-                printf("\nVellaGulf(HP = 4):");
-                scanf("%d", &count_VellaGulf);
-
-                printf("\nIndependence(HP = 5):");
-                scanf("%d", &count_Independence);
-
-                printf("\nFrragut(HP = 6):");
-                scanf("%d", &count_Frragut);
-
-                printf("\nVirginia(HP = 7):");
-                scanf("%d", &count_Virginia);
-
-                printf("\nGeorgeWashington(HP = 10):");
-                scanf("%d", &count_GeorgeWashington);
-
-                printf("\n"
-                       "1.Ships\n"
-                       "2.Map Size\n"
-                       "3.Theme\n"
-                       "4.return\n");
             }
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // second player choose his user
+            // showing the menu
+            printf("\nSecond Player\n");
+            printf("choose user\n");
+            printf("            1. choose from available users\n"
+                   "            2. new user\n");
+            // choosing the user information
+            do {
 
+                scanf("%d", &choice);
+
+            } while (choice != 1 && choice != 2);
+            // new user
             if (choice == 2) {
 
-                printf("WIDTH:");
-                scanf("%d", &WIDTH);
+                printf("username:");
+                scanf("%s", new_user2);
+                int i = 0;
 
-                printf("HEIGHT:");
-                scanf("%d", &HEIGHT);
+                // check if the user is already in use or not
+                while (i < number_users) {
 
-                printf("\n"
-                       "1.Ships\n"
-                       "2.Map Size\n"
-                       "3.Theme\n"
-                       "4.return\n");
+                    if (strcmpi(new_user2, List_Users[i].name) == 0) {
 
+                        printf("%s is already in use\n", new_user2);
+                        printf("username: ");
+                        scanf("%s", new_user2);
+                        i = 0;
+                    }
+                    i++;
+                }
+                // affecting the new users to the games information
+                number_users++;
+                strcpy(List_Users[number_users - 1].name, new_user2);
+                List_Users[number_users - 1].score = 0;
+
+                place_player2_List = number_users - 1;
             }
 
-            if (choice == 3) {
+                // choose from available users
+            else if (choice == 1) {
+                printf("           Users List\n");
 
-                show_themes();
+                for (int j = 0; j < number_users; j++) {
+                    printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                }
 
-                // choosing the theme
-                printf("choose your theme:");
+                printf("enter your user number:");
                 do {
                     scanf("%d", &choice);
-                }while (choice > 5 || choice < 0);
-                //
-                separator_code = choice;
+                    if (choice == place_player1_List)printf("user is already in use\n");
+                } while (choice - 1== place_player1_List || choice > number_users || choice < 1);
+                place_player2_List = choice - 1;
+            }
 
-                printf("\n"
-                       "1.Ships\n"
-                       "2.Map Size\n"
-                       "3.Theme\n"
-                       "4.return\n");
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // second player put his ships
+            // showing the menu
+
+
+            printf("put ships\n");
+            printf("           1.Auto\n"
+                   "           2.Manual\n");
+
+            do {
+
+                scanf("%d", &choice);
+
+            } while (choice != 1 && choice != 2);
+
+            if (choice == 1) {
+
+                map_player_ships_automatically(player2_ships, map_player2);
+
+            } else if (choice == 2) {
+
+                map_player_ships_manually(player2_ships, map_player2);
 
             }
 
-            scanf("%d", &choice);
+            // showing the main menu
+            printf("\n"
+                   "4. Settings\n"
+                   "5. Score Board\n"
+                   "6. Exit\n");
+
+            do {
+
+                scanf("%d", &choice);
+
+            } while (choice != 4 && choice != 5 && choice != 6);
 
         }
 
-        //showing menu
-        printf("\n"
-               "1. Play with a Friend\n"
-               "2. Play with bot\n"
-               "3. Load last game\n"
-               "4. Settings\n"
-               "5. Score Board\n"
-               "6. Exit\n");
+        //--------------------------------------------------------
+        //--------------------------------------------------------
 
-        do {
+        if (choice == 2) {
 
-            scanf("%d", &choice);
+            isBot = true;
+            //-----------------------------------------------------------------------
+            // first player choose his user
+            printf("\nFirst Player\n");
+            printf("choose user\n");
+            printf("            1. choose from available users\n"
+                   "            2. new user\n");
 
-        }while (choice != 4 && choice != 5 && choice != 6 && choice != 1 && choice != 2 && choice != 3);
+            // choosing the user info
+            do {
+                scanf("%d", &choice);
+            } while (choice != 1 && choice != 2);
 
-    }
+            // new user
+            if (choice == 2) {
 
+                printf("username:");
+                scanf("%s", new_user2);
+                int i = 0;
+                // check if the user is already in use or not
+                while (i < number_users) {
 
+                    if (strcmpi(new_user2, List_Users[i].name) == 0) {
 
-    if (choice == 5){
+                        printf("%s is already in use\n", new_user2);
+                        printf("username: ");
+                        scanf("%s", new_user2);
+                        i = 0;
+                    }
+                    i++;
+                }
 
-        sort_users();
-        for (int i = 0  ; i < number_users ; i ++){
+                // affecting the new users to games information
+                number_users++;
+                strcpy(List_Users[number_users - 1].name, new_user2);
+                List_Users[number_users - 1].score = 0;
 
-            printf("%d. %s %4d\n", i, List_Users[i].name, List_Users[i].score);
+                place_player1_List = number_users - 1;
+
+            }
+            // choose from available users
+            else if (choice == 1) {
+                printf("           Users List\n");
+
+                for (int j = 0; j < number_users; j++) {
+                    printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                }
+
+                printf("enter your user number:");
+                do {
+                    scanf("%d", &choice);
+                } while (choice > number_users || choice < 1);
+                place_player1_List = choice - 1;
+            }
+            // first player put his ships
+            // showing the menu
+            printf("\n"
+                   "1. put ships\n"
+                   "2. load\n");
+
+            do {
+                scanf("%d", &choice);
+            } while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
+
+            if (choice == 1) {
+                printf("put ships\n");
+                printf("           1.Auto\n"
+                       "           2.Manual\n");
+                // putting players ships
+                do {
+                    scanf("%d", &choice);
+                } while (choice != 1 && choice != 2);
+
+                if (choice == 1) {
+                    map_player_ships_automatically(player1_ships, map_player1);
+                } else if (choice == 2) {
+                    map_player_ships_manually(player1_ships, map_player1);
+                }
+                // put the bots ships
+                map_player_ships_automatically(player2_ships, map_player2);
+
+            } else if (choice == 2) {
+                load(map_player1, map_player2, player1_ships, map_player2_for_player1, map_player1_for_player2,
+                     player2_ships);
+
+            }
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // showing the menu again
+            printf("\n"
+                   "4. Settings\n"
+                   "5. Score Board\n"
+                   "6. Exit\n");
+
+            do {
+                scanf("%d", &choice);
+            } while (choice != 4 && choice != 5 && choice != 6);
+
         }
 
-        // showing menu
-        printf("\n"
-               "1. Play with a Friend\n"
-               "2. Play with bot\n"
-               "3. Load last game\n"
-               "4. Settings\n"
-               "5. Score Board\n"
-               "6. Exit\n");
+        //--------------------------------------------------------
+        //--------------------------------------------------------
 
-        do {
+        if (choice == 3) {
 
+            if (number_saved_games == 0) {
+                printf("there is no saved game in memory!\n");
+                continue;
+            }
+            // putting ships
+            //----------------------------------------------------------------------
+            //----------------------------------------------------------------------
+            load(map_player1, map_player2, player1_ships, map_player2_for_player1, map_player1_for_player2,
+                 player2_ships);
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // first player choose his user
+            printf("\nFirst Player\n");
+
+            printf("choose user\n");
+            printf("            1. choose from available users\n"
+                   "            2. new user\n");
+
+            // choosing the user info
             scanf("%d", &choice);
 
-        }while (choice != 4 && choice != 5 && choice != 6 && choice != 1 && choice != 2 && choice != 3);
+            // new user
+            if (choice == 2) {
 
-    }
+                printf("username:");
 
-    if (choice == 6){
+                scanf("%s", new_user1);
+                int i = 0;
 
-        run = true;
-        return ;
+                // check if the user is already in use or not
+                while (i < number_users) {
+
+                    if (strcmpi(new_user1, List_Users[i].name) == 0) {
+
+                        printf("%s is already in use\n", new_user1);
+                        printf("username: ");
+                        scanf("%s", new_user1);
+
+                        i = 0;
+                    }
+                    i++;
+                }
+
+                // affecting the new users to games information
+                number_users++;
+                strcpy(List_Users[number_users - 1].name, new_user1);
+                List_Users[number_users - 1].score = 0;
+
+                place_player1_List = number_users - 1;
+
+            }
+
+                // choose from available users
+            else if (choice == 1) {
+
+                users_file = fopen("users.txt", "r");
+                printf("           Users List\n");
+
+                for (int j = 0; j < number_users; j++) {
+                    printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                }
+
+                printf("enter your user number:");
+                do {
+                    scanf("%d", &choice);
+                    if (choice == place_player1_List)printf("user is already in use\n");
+                } while (choice > number_users || choice < 1);
+                place_player1_List = choice - 1;
+            }
+
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // second player choose his user
+            //-----------------------------------------------------------------------
+            //-----------------------------------------------------------------------
+            // second player choose his user
+            // showing the menu
+
+            printf("\nSecond Player\n");
+
+            printf("choose user\n");
+
+            printf("            1. choose from available users\n"
+                   "            2. new user\n");
+
+            // choosing the user information
+
+            do {
+
+                scanf("%d", &choice);
+
+            } while (choice != 1 && choice != 2);
+
+            // new user
+            if (choice == 2) {
+
+                printf("username:");
+
+                scanf("%s", new_user2);
+                int i = 0;
+
+                // check if the user is already in use or not
+                while (i < number_users) {
+
+                    if (strcmpi(new_user2, List_Users[i].name) == 0) {
+
+                        printf("%s is already in use\n", new_user2);
+                        printf("username: ");
+                        scanf("%s", new_user2);
+
+
+                        i = 0;
+                    }
+                    i++;
+                }
+
+                // affecting the new users to the games information
+                number_users++;
+                strcpy(List_Users[number_users - 1].name, new_user2);
+                List_Users[number_users - 1].score = 0;
+
+                place_player2_List = number_users - 1;
+
+            }
+
+                // choose from available users
+            else if (choice == 1) {
+
+                users_file = fopen("users.txt", "r");
+
+                printf("           Users List\n");
+
+                for (int j = 0; j < number_users; j++) {
+
+                    printf("%d. %s %10d\n", j + 1, List_Users[j].name, List_Users[j].score);
+                }
+
+                printf("enter your user number");
+                do {
+                    scanf("%d", &choice);
+                    place_player2_List = choice - 1;
+                } while (place_player1_List == place_player2_List || place_player2_List > number_users || place_player2_List < 1);
+
+            }
+            //------------------------------------------------------
+            //------------------------------------------------------
+            // showing the main menu
+            printf("\n"
+                   "1. Play with a Friend\n"
+                   "2. Play with Bot\n"
+                   "3. load game\n"
+                   "4. Settings\n"
+                   "5. Score Board\n"
+                   "6. Exit\n");
+
+            do {
+
+                scanf("%d", &choice);
+
+            } while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
+
+
+        }
+
+        //--------------------------------------------------------
+        //--------------------------------------------------------
+
+        if (choice == 4) {
+
+            printf("\n"
+                   "1.Ships\n"
+                   "2.Map Size\n"
+                   "3.Theme\n"
+                   "4.return\n");
+
+            do {
+                scanf("%d", &choice);
+            } while (choice < 1 || choice > 4);
+
+            while (choice != 4) {
+
+                if (choice == 1) {
+                    printf("\nchoose the number of each ship");
+
+                    printf("\nGreenBay(HP = 1):");
+                    scanf("%d", &count_GreenBay);
+
+                    printf("\nFreedom(HP = 2):");
+                    scanf("%d", &count_Freedom);
+
+                    printf("\nPioneer(HP = 3):");
+                    scanf("%d", &count_Pioneer);
+
+                    printf("\nVellaGulf(HP = 4):");
+                    scanf("%d", &count_VellaGulf);
+
+                    printf("\nIndependence(HP = 5):");
+                    scanf("%d", &count_Independence);
+
+                    printf("\nFrragut(HP = 6):");
+                    scanf("%d", &count_Frragut);
+
+                    printf("\nVirginia(HP = 7):");
+                    scanf("%d", &count_Virginia);
+
+                    printf("\nGeorgeWashington(HP = 10):");
+                    scanf("%d", &count_GeorgeWashington);
+
+                    printf("\n"
+                           "1.Ships\n"
+                           "2.Map Size\n"
+                           "3.Theme\n"
+                           "4.return\n");
+                }
+
+                if (choice == 2) {
+
+                    printf("WIDTH:");
+                    scanf("%d", &WIDTH);
+
+                    printf("HEIGHT:");
+                    scanf("%d", &HEIGHT);
+
+                    free(map_player1);
+                    free(map_player2);
+                    free(map_player1_for_player2);
+                    free(map_player2_for_player1);
+                    map_player1 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+                    map_player2 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+                    map_player1_for_player2 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+                    map_player2_for_player1 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+
+                    printf("\n"
+                           "1.Ships\n"
+                           "2.Map Size\n"
+                           "3.Theme\n"
+                           "4.return\n");
+
+                }
+
+                if (choice == 3) {
+
+                    show_themes();
+
+                    // choosing the theme
+                    printf("choose your theme:");
+                    do {
+
+                        scanf("%d", &choice);
+
+                    } while (choice > 6 || choice < 1);
+                    //
+                    separator_code = choice;
+
+                    printf("\n"
+                           "1.Ships\n"
+                           "2.Map Size\n"
+                           "3.Theme\n"
+                           "4.return\n");
+
+                }
+
+                scanf("%d", &choice);
+
+            }
+
+            //showing menu
+            printf("\n"
+                   "1. Play with a Friend\n"
+                   "2. Play with Bot\n"
+                   "3. load game\n"
+                   "4. Settings\n"
+                   "5. Score Board\n"
+                   "6. Exit\n");
+
+            do {
+
+                scanf("%d", &choice);
+
+            }while(choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6);
+
+        }
+
+        //--------------------------------------------------------
+        //--------------------------------------------------------
+
+        if (choice == 5) {
+
+            sort_users();
+            for (int i = 0; i < number_users; i++) {
+
+                printf("%d. %s %4d\n", i, List_Users[i].name, List_Users[i].score);
+            }
+
+            // showing menu
+            printf("\n"
+                   "1. Play with a Friend\n"
+                   "2. Play with Bot\n"
+                   "3. load game\n"
+                   "4. Settings\n"
+                   "5. Score Board\n"
+                   "6. Exit\n");
+
+            do {
+                scanf("%d", &choice);
+            } while (choice != 4 && choice != 5 && choice != 6 && choice != 1 && choice != 2 && choice != 3);
+
+        }
+        //--------------------------------------------------------
+        //--------------------------------------------------------
     }
 }
 
 
-// load last game
-void load_last_game(){
-
-
-}
-
-
-//// this function runs the game
-//void Main() {
-//
-//    // games initial options
-//    char *junk = malloc(sizeof(char) * 100);
-//
-//    //--------------------- must add code for the WIDTH and HEIGHT input
-//    //-----------------initializing ships array
-//    char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
-//    char *map_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
-//
-//    char *map_player1_for_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
-//    char *map_player2_for_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
-//
-//
-//    for (int i = 0; i < WIDTH * HEIGHT; i++) {
-//
-//        map_player1[i] = ' ';
-//        map_player2[i] = ' ';
-//
-//        map_player1_for_player2[i] = ' ';
-//        map_player2_for_player1[i] = ' ';
-//
-//    }
-//
-//
-//    struct SHIP *player2_ships[10];
-//    struct SHIP *player1_ships[10];
-//
-//    for (int i = 0; i < total_number_ships; i++) {
-//
-//        player2_ships[i] = malloc(sizeof(struct SHIP));
-//        player2_ships[i]->head = NULL;
-//        player2_ships[i]->tail = NULL;
-//
-//        player1_ships[i] = malloc(sizeof(struct SHIP));
-//        player1_ships[i]->head = NULL;
-//        player1_ships[i]->tail = NULL;
-//    }
-//
-//    player1_ships[0]->length = 5;
-//
-//    player1_ships[1]->length = 3;
-//    player1_ships[2]->length = 3;
-//
-//    player1_ships[3]->length = 2;
-//    player1_ships[4]->length = 2;
-//    player1_ships[5]->length = 2;
-//
-//    player1_ships[6]->length = 1;
-//    player1_ships[7]->length = 1;
-//    player1_ships[8]->length = 1;
-//    player1_ships[9]->length = 1;
-//
-//
-//    player2_ships[0]->length = 5;
-//
-//    player2_ships[1]->length = 3;
-//    player2_ships[2]->length = 3;
-//
-//    player2_ships[3]->length = 2;
-//    player2_ships[4]->length = 2;
-//    player2_ships[5]->length = 2;
-//
-//    player2_ships[6]->length = 1;
-//    player2_ships[7]->length = 1;
-//    player2_ships[8]->length = 1;
-//    player2_ships[9]->length = 1;
-//
-//
-//    char *recorder = malloc(sizeof(char) * 100000);
-//
-//
-//    show_menu(player1_ships, map_player1, player2_ships, map_player2);
-//
-//    //start the game
-//    while (run) {
-//
-//        // first of all we check that if we should continue or not
-//        run = ifRun(player1_ships, player2_ships);
-//
-//        if (run) {
-//
-//            // recording the game
-//            record_game(map_player1, map_player2);
-//
-//            shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
-//            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
-//            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-//
-//            shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
-//            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
-//            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-//
-//        }
-//    }
-//
-//    printf("\n\n\n\n\n\n\n\n\n\n\nGAME OVER\n\n\n");
-//    printf("                 THIS IS THE PLAY BACK\n\n\n");
-//
-//    play_back(recorder);
-//}
-
-
-void Copy_Main() {
+// this function runs the game
+void Main(void) {
 
     // games initial options
-    total_number_ships = count_GreenBay + count_GeorgeWashington + count_Virginia + count_Frragut + count_Independence + count_Freedom + count_Pioneer +count_VellaGulf;
-
     char *junk = malloc(sizeof(char) * 100);
+    int choice = 0;
+    int x;
+    int y;
 
+//    FILE* PLAY_BACK = fopen("RECORD.txt", "w");
+//    fclose(PLAY_BACK);
+
+    srand(time(NULL));
+    FILE *file = fopen("data.txt", "r");
+    fscanf(file, "%d", &number_saved_games);
+    fclose(file);
     //--------------------- must add code for the WIDTH and HEIGHT input
     //-----------------initializing ships array
-    char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
-    char *map_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player1 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+    char *map_player2 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
 
-    char *map_player1_for_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
-    char *map_player2_for_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player1_for_player2 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
+    char *map_player2_for_player1 = malloc(sizeof(char) * (WIDTH * HEIGHT + 1));
 
 
     for (int i = 0; i < WIDTH * HEIGHT; i++) {
+
         map_player1[i] = ' ';
         map_player2[i] = ' ';
 
         map_player1_for_player2[i] = ' ';
         map_player2_for_player1[i] = ' ';
+
     }
 
 
-    struct SHIP **player2_ships = malloc(sizeof(struct SHIP*)*total_number_ships);
-    struct SHIP **player1_ships = malloc(sizeof(struct SHIP*)*total_number_ships);
+    struct SHIP *player2_ships[10];
+    struct SHIP *player1_ships[10];
 
     for (int i = 0; i < total_number_ships; i++) {
 
@@ -2146,59 +2324,40 @@ void Copy_Main() {
         player1_ships[i] = malloc(sizeof(struct SHIP));
         player1_ships[i]->head = NULL;
         player1_ships[i]->tail = NULL;
-
     }
 
-    for (int i = 0 ; i < total_number_ships ; i++){
+    player1_ships[0]->length = 5;
 
-        if (i < count_GreenBay) {
-            player1_ships[i]->length = 1;
-            player2_ships[i]->length = 1;
-        }
+    player1_ships[1]->length = 3;
+    player1_ships[2]->length = 3;
 
-        else if (i < count_Freedom + count_GreenBay ) {
-            player1_ships[i]->length = 2;
-            player2_ships[i]->length = 2;
-        }
+    player1_ships[3]->length = 2;
+    player1_ships[4]->length = 2;
+    player1_ships[5]->length = 2;
 
-        else if (i < count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 3;
-            player2_ships[i]->length = 3;
-        }
-
-        else if (i < count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 4;
-            player2_ships[i]->length = 4;
-        }
-
-        else if (i < count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 5;
-            player2_ships[i]->length = 5;
-        }
-
-        else if (i < count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 6;
-            player2_ships[i]->length = 6;
-        }
-
-        else if (i < count_Virginia + count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 7;
-            player2_ships[i]->length = 7;
-        }
-
-        else if (i < count_GeorgeWashington + count_Virginia + count_Frragut + count_Independence + count_VellaGulf + count_Pioneer + count_Freedom + count_GreenBay) {
-            player1_ships[i]->length = 10;
-            player2_ships[i]->length = 10;
-        }
-
-    }
+    player1_ships[6]->length = 1;
+    player1_ships[7]->length = 1;
+    player1_ships[8]->length = 1;
+    player1_ships[9]->length = 1;
 
 
-    // repositories
-    char *recorder= malloc(sizeof(char) * 100000);
+    player2_ships[0]->length = 5;
 
-    //------------------------------------------------------------------------
-    show_menu(player1_ships, map_player1, player2_ships, map_player2);
+    player2_ships[1]->length = 3;
+    player2_ships[2]->length = 3;
+
+    player2_ships[3]->length = 2;
+    player2_ships[4]->length = 2;
+    player2_ships[5]->length = 2;
+
+    player2_ships[6]->length = 1;
+    player2_ships[7]->length = 1;
+    player2_ships[8]->length = 1;
+    player2_ships[9]->length = 1;
+
+
+    char *recorder = malloc(sizeof(char) * 100000);
+    show_menu(player1_ships, map_player1, player2_ships, map_player2, map_player1_for_player2, map_player2_for_player1);
 
     //start the game
     while (run) {
@@ -2206,30 +2365,44 @@ void Copy_Main() {
         // first of all we check that if we should continue or not
         run = ifRun(player1_ships, player2_ships);
 
-
         if (run) {
 
             // recording the game
             record_game(map_player1, map_player2);
 
             shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
-            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2,
-                 player2_ships);
+            save_users_info();
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+            if (isBot == true){
+                do {
+                    x = rand() % WIDTH;
+                    y = rand() % HEIGHT;
+                } while (map_player1_for_player2[x + WIDTH * y] != ' ');
+                shoot(map_player1_for_player2, map_player2, map_player1, player1_ships, x, y);
+            }
+
+
+            else {shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);}
+            save_users_info();
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         }
 
-        if (run){
+        printf("save game(1 : yes /0 : no):");
+        scanf("%d", &choice);
 
-            shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
-            save(map_player1, map_player2_for_player1, player1_ships, map_player2, map_player1_for_player2, player2_ships);
-            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-
+        if (choice == 1){
+            number_saved_games++;
+            file = fopen("data.txt", "w");
+            fprintf(file, "%d", number_saved_games);
+            fclose(file);
+            save(map_player1, map_player2, player1_ships, map_player2_for_player1, map_player1_for_player2, player2_ships );
         }
 
     }
 
-    printf("\n\n\n\n\n\n\n\n\n\n\nGAME OVER\n\n\n");
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n                      GAME OVER");
     printf("                 THIS IS THE PLAY BACK\n\n\n");
 
     play_back(recorder);
@@ -2238,31 +2411,85 @@ void Copy_Main() {
 
 int main() {
     // the reason im doing this , is getting more control on my program
-    Copy_Main();
+    Main();
 }
 
 
 // a sample for the game display
 
-//                         e | e | w | w | w
-//                        ---|---|---|---|---
-//                         e | e | w | w | w
-//                        ---|---|---|---|---
-//                         w | w | w | w | w
-//                        ---|---|---|---|---
-//                         w | w | w | w | w
-
-
-//                         e | e | w | c | w
-//                        ---|---|---|---|---
-//                         e | e | w | c | w
-//                        ---|---|---|---|---
-//                         w | w | c | c | w
-//                        ---|---|---|---|---
-//                         w | w | c | c | w
-
 //               Shady1
+//
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+// ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+//  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
+//
+//
+//                Shady2
+//
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+// ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+//  w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w ▒ w
+//
+//
+//                 Shady3
+//
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w ▓ w
 
+
+
+// a sample for the game display
+//               Shady1
+//
 //  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w
 // ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 //  w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w ░ w

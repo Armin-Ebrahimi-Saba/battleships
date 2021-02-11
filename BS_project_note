@@ -1,2 +1,360 @@
 This note pad is for putting notes while developing
-i guess that there is a problem with changing the blocks character while shooting
+GreenBay(HP = 1):3
+
+Freedom(HP = 2):3
+
+Pioneer(HP = 3):0
+
+VellaGulf(HP = 4):0
+
+Independence(HP = 5):1
+
+Frragut(HP = 6):1
+
+Virginia(HP = 7):1
+
+GeorgeWashington(HP = 10):1
+
+4 3 3 1 3 3 0 0 1 1 1 1 2 15 15 4 1 2 armin 2 1 0 0 r 1 9 9 d 1 9 0 r 2 9 3 d 2 9 6 d 2 0 5 d 5 8 8 d 5 14 7 u 6 6 6 d 7 0 14 r 10 3 2 r
+1 0 0 r 1 9 9 d 1 9 0 r 2 9 3 d 2 9 6 d 2 0 5 d 5 14 7 u 6 6 6 d 7 0 14 r 10 3 2 r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// this function runs the game
+void Copy_Main(void) {
+
+    // games initial options
+    total_number_ships = count_GreenBay + count_GeorgeWashington + count_Virginia + count_Frragut + count_Independence +
+                         count_Freedom + count_Pioneer + count_VellaGulf;
+    char *recorder = malloc(sizeof(char) * 100000);
+    char *junk = malloc(sizeof(char) * 100);
+
+    //--------------------- must add code for the WIDTH and HEIGHT input
+    //-----------------initializing ships array
+    char *map_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+
+    char *map_player1_for_player2 = malloc(sizeof(char) * WIDTH * HEIGHT);
+    char *map_player2_for_player1 = malloc(sizeof(char) * WIDTH * HEIGHT);
+
+
+    for (int i = 0; i < WIDTH * HEIGHT; i++) {
+        map_player1[i] = ' ';
+        map_player2[i] = ' ';
+
+        map_player1_for_player2[i] = ' ';
+        map_player2_for_player1[i] = ' ';
+    }
+
+
+    struct SHIP **player2_ships = malloc(sizeof(struct SHIP *) * total_number_ships);
+    struct SHIP **player1_ships = malloc(sizeof(struct SHIP *) * total_number_ships);
+
+    for (int i = 0; i < total_number_ships; i++) {
+
+        player2_ships[i] = malloc(sizeof(struct SHIP));
+        player2_ships[i]->head = NULL;
+        player2_ships[i]->tail = NULL;
+
+        player1_ships[i] = malloc(sizeof(struct SHIP));
+        player1_ships[i]->head = NULL;
+        player1_ships[i]->tail = NULL;
+
+    }
+
+    int j = 0;
+    int k = 0;
+    for (j ; j < k + count_GreenBay; j++) {
+        player1_ships[j]->length = 1;
+        player2_ships[j]->length = 1;
+    }
+    k = j;
+    for (j ; j < k + count_Freedom; j++) {
+        player1_ships[j]->length = 2;
+        player2_ships[j]->length = 2;
+    }
+    k = j;
+    for (j ; j < k + count_Pioneer; j++) {
+        player1_ships[j]->length = 3;
+        player2_ships[j]->length = 3;
+    }
+    k = j;
+    for (j ; j < k + count_VellaGulf; j++) {
+        player1_ships[j]->length = 4;
+        player2_ships[j]->length = 4;
+    }
+    k = j;
+    for (j ; j < k + count_Independence; j++) {
+        player1_ships[j]->length = 5;
+        player2_ships[j]->length = 5;
+    }
+    k = j;
+    for (j ; j < k + count_Frragut; j++) {
+        player1_ships[j]->length = 6;
+        player2_ships[j]->length = 6;
+    }
+    k = j;
+    for (j ; j < k + count_Virginia; j++) {
+        player1_ships[j]->length = 7;
+        player2_ships[j]->length = 7;
+    }
+    k = j;
+    for (j ; j < k + count_GeorgeWashington; j++) {
+        player1_ships[j]->length = 10;
+        player2_ships[j]->length = 10;
+    }
+
+//    for (int i = 0 ; i < 10 ; i++){
+//        printf("%d\n", player1_ships[i]->length);
+//    }
+//    for (int i = 0 ; i < 10 ; i++){
+//        printf("%d\n", player2_ships[i]->length);
+//    }
+
+    //------------------------------------------------------------------------
+    show_menu(player1_ships, map_player1, player2_ships, map_player2, map_player1_for_player2, map_player2_for_player1);
+    //start the game
+    while (run) {
+
+        // first of all we check that if we should continue or not
+        run = ifRun(player1_ships, player2_ships);
+        record_game(map_player1, map_player2);
+
+        if (run) {
+            shoot_manually(map_player2_for_player1, map_player1, map_player2, player2_ships);
+            save_users_info();
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        }
+
+        if (run) {
+            shoot_manually(map_player1_for_player2, map_player2, map_player1, player1_ships);
+            save_users_info();
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        }
+
+    }
+
+    printf("                 THIS IS THE PLAY BACK\n\n");
+    play_back(recorder);
+    printf("\n\nGAME OVER\n\n\n");
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// this function locate the ships into the map_player manually
+void map_player_ships_manually(struct SHIP **ships, char *map_player){
+    // the code below is for players mapping term
+
+    int length_1_counter = 0;
+    int length_2_counter = 0;
+    int length_3_counter = 0;
+    int length_4_counter = 0;
+    int length_5_counter = 0;
+    int length_6_counter = 0;
+    int length_7_counter = 0;
+    int length_10_counter = 0;
+
+
+    int length;                              // length is for the length of the boat that the player select
+    int _x_;                                 // x of head of the ship
+    int _y_;                                 // y of head of the ship
+    char *dir = malloc(sizeof(char) *2);     // the direction that the ship has, must choose between u(up), d(down), r(right), l(left)
+
+    while (length_1_counter + length_2_counter + length_3_counter + length_5_counter + length_10_counter + length_4_counter + length_7_counter + length_6_counter < total_number_ships) {
+
+        //----------------------------------------------------- this part is for getting inputs from user (player)
+        // scanning a valid length
+        do {
+            printf("select the size of the ship\n");
+            scanf("%d", &length);
+        } while (length != 1 && length != 2 && length != 3 && length != 4 && length != 5 && length != 6 && length != 7 && length != 10);
+        // scanning a valid x
+        do {
+            printf("enter a number for x between 0 and %d\n", WIDTH - 1);
+            scanf("%d", &_x_);
+        } while (_x_ < 0 || _x_ > WIDTH - 1);
+        // scanning a valid y
+        do {
+            printf("enter a number for y between 0 and %d\n", HEIGHT - 1);
+            scanf("%d", &_y_);
+        } while (_y_ < 0 || _y_ > HEIGHT - 1);
+        // scanning a valid directory
+        do {
+            printf("enter the direction that the ship has, must choose between u(up), d(down), r(right), l(left)\n");
+            scanf("%s", dir);
+        } while (strcmp(dir, "u") != 0 && strcmp(dir, "d") != 0 && strcmp(dir, "r") != 0 && strcmp(dir, "l") != 0);
+        //----------------------------------------------------- this part is placing ships in the map_player
+        //----------------------length 1
+        if (length == 1 && length_1_counter < count_GreenBay) {
+
+            if (make_ship(ships[length_1_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_1_counter++;
+
+        } else if (length == 1 && length_1_counter == count_GreenBay) {
+            printf("you have used all of your ships with length of 1\n");
+            continue;
+        }
+        //----------------------length 2
+        if (length == 2 && length_2_counter < count_Freedom) {
+
+            if (make_ship(ships[count_GreenBay + length_2_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_2_counter++;
+
+        } else if (length == 2 && length_2_counter == count_Freedom) {
+            printf("you have used all of your ships with length of 2\n");
+            continue;
+        }
+        //----------------------length 3
+        if (length == 3 && length_3_counter < count_Pioneer) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom  + length_3_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_3_counter++;
+
+        } else if (length == 3 && length_3_counter == count_Pioneer) {
+            printf("you have used all of your ships with length of 3\n");
+            continue;
+        }
+        //----------------------length 4
+        if (length == 4 && length_4_counter < count_VellaGulf) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom + count_Pioneer + length_4_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_4_counter++;
+
+        } else if (length == 4 && length_4_counter == count_VellaGulf) {
+            printf("you have used all of your ships with length of 4\n");
+            continue;
+        }
+        //----------------------length 5
+        if (length == 5 && length_5_counter < count_Independence) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom + count_Pioneer + count_VellaGulf + length_5_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_5_counter++;
+
+        } else if (length == 5 && length_5_counter == count_Independence) {
+            printf("you have used all of your ships with length of 5\n");
+            continue;
+        }
+        //----------------------length 6
+        if (length == 6 && length_6_counter < count_Frragut) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom + count_Pioneer + count_VellaGulf + count_Independence + length_6_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_6_counter++;
+
+        } else if (length == 6 && length_6_counter == count_Frragut) {
+            printf("you have used all of your ships with length of 6\n");
+            continue;
+        }
+        //----------------------length 7
+        if (length == 7 && length_7_counter < count_Virginia) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom + count_Pioneer + count_VellaGulf + count_Independence + count_Frragut + length_7_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_7_counter++;
+
+        } else if (length == 7 && length_7_counter == count_Virginia) {
+            printf("you have used all of your ships with length of 7\n");
+            continue;
+        }
+        //----------------------length 10
+        if (length == 10 && length_10_counter < count_GeorgeWashington) {
+
+            if (make_ship(ships[count_GreenBay + count_Freedom + count_Pioneer + count_VellaGulf + count_Independence + count_Virginia + count_Frragut + length_10_counter], dir, map_player, _x_, _y_) == 0) continue;
+            length_10_counter++;
+
+        } else if (length == 10 && length_10_counter == count_GeorgeWashington) {
+            printf("you have used all of your ships with length of 10\n");
+            continue;
+        }
+        //--------------------------------------------------------------------------------------------------------
+    }
+}
+
